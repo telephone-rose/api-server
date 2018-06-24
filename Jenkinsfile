@@ -33,12 +33,14 @@ pipeline {
         DB_HOST     = "postgres"
         DB_PASSWORD = "password"
         DB_USERNAME = "postgres"
+        NODE_ENV    = "test"
       }
       steps {
         script {
           docker.image("postgres").withRun("-e POSTGRES_PASSWORD=${env.DB_PASSWORD} -e POSTGRES_USER=${env.DB_USERNAME} -e POSTGRES_DB=${env.DB_NAME}") { pgContainer ->
             docker.image("redis").withRun("") { redisContainer ->
               docker.image('node').inside("--link ${pgContainer.id}:pg --link ${redisContainer.id}:redis") {
+                sh "npm ci"
                 sh "npm run lint"
                 sh "npm test"
               }
