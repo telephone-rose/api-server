@@ -34,6 +34,14 @@ const config: GraphQLObjectTypeConfig<{}, {}> = {
       },
       type: new GraphQLNonNull(GraphQLBoolean),
     },
+    refreshAuthToken: {
+      args: {
+        refreshToken: {
+          type: new GraphQLNonNull(GraphQLString),
+        },
+      },
+      type: new GraphQLNonNull(Session),
+    },
     registerPushToken: {
       args: {
         devicePushToken: {
