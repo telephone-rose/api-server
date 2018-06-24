@@ -15,7 +15,7 @@
     "copy":
       "mkdir dist && cp -rf lib/* package*.json dist && cd dist && npm ci --production && cd -",
     "deploy":
-      "npm run clean && npm run build && npm run copy && npm run package && aws cloudformation deploy --template-file serverless-output.yaml --stack-name graphql-api --capabilities CAPABILITY_IAM"
+      "npm run clean && npm run build && npm run copy && npm run package && aws cloudformation deploy --template-file serverless-output.yaml --stack-name graphql-api --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset"
   },
   "repository": {
     "type": "git",
