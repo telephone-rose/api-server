@@ -15,7 +15,7 @@ const config: GraphQLInputObjectTypeConfig = {
       type: new GraphQLNonNull(GraphQLInt),
     },
   }),
-  name: "GeometryPointInput",
+  name: "CursorPaginationInput",
 };
 
 export default new GraphQLInputObjectType(config);
