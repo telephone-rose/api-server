@@ -9,7 +9,7 @@
     "clean": "rimraf lib dist serverless-output.yaml",
     "precommit": "npm run build && lint-staged && npm test",
     "test":
-      "cross-env NODE_ENV=test nyc mocha --exit --require source-map-support/register --require ts-node/register --full-trace --trace-warnings --bail 'src/**/*.test.ts'",
+      "cross-env NODE_ENV=test nyc mocha --exit --require dotenv/config --require source-map-support/register --require ts-node/register --full-trace --trace-warnings --bail 'src/**/*.test.ts'",
     "package":
       "aws cloudformation package --template-file template.yaml --output-template-file serverless-output.yaml --s3-bucket graphql-api-server-lambda-function",
     "copy":
@@ -71,6 +71,7 @@
     "@types/node": "^10.3.4",
     "@types/sequelize": "^4.27.23",
     "cross-env": "^5.2.0",
+    "dotenv": "^6.0.0",
     "husky": "^0.14.3",
     "lint-staged": "^7.2.0",
     "mocha": "^5.2.0",

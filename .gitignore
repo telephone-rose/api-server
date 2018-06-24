@@ -6,3 +6,4 @@ lib
 serverless-output.yaml
 coverage
 .nyc_output
+.env
