@@ -1,6 +1,5 @@
 import {
   GraphQLBoolean,
-  GraphQLEnumType,
   GraphQLID,
   GraphQLInt,
   GraphQLList,
@@ -13,18 +12,6 @@ import * as GraphQLDate from "graphql-date";
 import CursorPaginationInput from "./cursor-pagination-input";
 import Message from "./message";
 import User from "./user";
-
-const ConversationStatus = new GraphQLEnumType({
-  name: "ConversationStatus",
-  values: {
-    closed: {
-      value: "closed",
-    },
-    open: {
-      value: "open",
-    },
-  },
-});
 
 const config: GraphQLObjectTypeConfig<{}, {}> = {
   fields: () => ({
@@ -57,9 +44,6 @@ const config: GraphQLObjectTypeConfig<{}, {}> = {
         },
       },
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(Message))),
-    },
-    status: {
-      type: new GraphQLNonNull(ConversationStatus),
     },
   }),
   name: "Conversation",
