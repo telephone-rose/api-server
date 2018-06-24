@@ -1,0 +1,157 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  RedisInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: Redis
+      GroupDescription: Redis security group
+      VpcId: vpc-09a5e36f
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '6379'
+        ToPort: '6379'
+        SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
+  RedisInstanceSubnetGroup:
+    Type: "AWS::ElastiCache::SubnetGroup"
+    Properties:
+      CacheSubnetGroupName: RedisInstanceSubnetGroup
+      Description: RedisInstance subnet group
+      SubnetIds:
+      - subnet-c08a31a6
+      - subnet-cf830887
+      - subnet-25a2677f
+  RedisPrivateSubnetGroup:
+    Type: "AWS::ElastiCache::SubnetGroup"
+    Properties:
+      CacheSubnetGroupName: RedisPrivateSubnetGroup
+      Description: RedisInstance private subnet group
+      SubnetIds:
+      - subnet-09d4b83d43492a391
+      - subnet-0313a695f66eadadc
+      - subnet-047101e56a01d7602
+  RedisInstance:
+    Type: "AWS::ElastiCache::CacheCluster"
+    Properties:
+      AutoMinorVersionUpgrade: true
+      AZMode: single-az
+      CacheNodeType: cache.t2.micro
+      CacheSubnetGroupName: RedisPrivateSubnetGroup
+      Engine: redis
+      NumCacheNodes: 1
+      VpcSecurityGroupIds:
+        - !GetAtt RedisInstanceSecurityGroup.GroupId
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: RDS private subnet Group
+      SubnetIds:
+      - subnet-c08a31a6
+      - subnet-cf830887
+      - subnet-25a2677f
+  RDSPrivateSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: RDS private subnet group
+      SubnetIds:
+      - subnet-09d4b83d43492a391
+      - subnet-0313a695f66eadadc
+      - subnet-047101e56a01d7602
+  RDSPostgresSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: RDSPostgres
+      GroupDescription: RDS Postgres security group
+      VpcId: vpc-09a5e36f
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '5432'
+        ToPort: '5432'
+        SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
+  RDSPostgresInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      StorageType: gp2
+      AllocatedStorage: 20
+      AutoMinorVersionUpgrade: true
+      AvailabilityZone: eu-west-1a
+      DBInstanceClass: db.t2.micro
+      DBName: postgres
+      DBSubnetGroupName:
+        Ref: RDSPrivateSubnetGroup
+      Engine: postgres
+      EngineVersion: 10.3
+      MasterUsername: postgres
+      MasterUserPassword: password
+      PubliclyAccessible: false
+      VPCSecurityGroups:
+        - !GetAtt RDSPostgresSecurityGroup.GroupId
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: GraphQLLambda
+      GroupDescription: GraphQL Lambda security group
+      VpcId: vpc-09a5e36f
+  Lambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: './dist'
+      MemorySize: 512
+      Timeout: 3
+      Policies:
+        - AWSLambdaVPCAccessExecutionRole
+      VpcConfig:
+        SecurityGroupIds:
+        - !GetAtt LambdaSecurityGroup.GroupId
+        SubnetIds:
+        - subnet-09d4b83d43492a391
+        - subnet-0313a695f66eadadc
+        - subnet-047101e56a01d7602
+      Environment:
+        Variables:
+          NODE_ENV: production
+          DB_USERNAME: postgres
+          DB_PASSWORD: password
+          DB_NAME: postgres
+          DB_HOST: !GetAtt RDSPostgresInstance.Endpoint.Address
+          REDIS_HOST: !GetAtt RedisInstance.RedisEndpoint.Address
+      Handler: index.graphqlHandler
+      Description: 'The main API endpoint'
+      Runtime: nodejs8.10
+      Events:
+        GetRequest:
+          Type: Api
+          Properties:
+            Path: /
+            Method: get
+        PostRequest:
+          Type: Api
+          Properties:
+            Path: /
+            Method: post
+  SyncLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: './dist'
+      MemorySize: 512
+      Timeout: 20
+      Policies:
+        - AWSLambdaVPCAccessExecutionRole
+      VpcConfig:
+        SecurityGroupIds:
+         - !GetAtt LambdaSecurityGroup.GroupId
+        SubnetIds:
+        - subnet-09d4b83d43492a391
+        - subnet-0313a695f66eadadc
+        - subnet-047101e56a01d7602
+      Environment:
+        Variables:
+          NODE_ENV: production
+          DB_USERNAME: postgres
+          DB_PASSWORD: password
+          DB_NAME: postgres
+          DB_HOST: !GetAtt RDSPostgresInstance.Endpoint.Address
+          REDIS_HOST: !GetAtt RedisInstance.RedisEndpoint.Address
+      Handler: index.syncHandler
+      Description: 'An endpoint to trigger a db sync'
+      Runtime: nodejs8.10
