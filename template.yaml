@@ -12,15 +12,6 @@ Resources:
         FromPort: '6379'
         ToPort: '6379'
         SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
-  RedisInstanceSubnetGroup:
-    Type: "AWS::ElastiCache::SubnetGroup"
-    Properties:
-      CacheSubnetGroupName: RedisInstanceSubnetGroup
-      Description: RedisInstance subnet group
-      SubnetIds:
-      - subnet-c08a31a6
-      - subnet-cf830887
-      - subnet-25a2677f
   RedisPrivateSubnetGroup:
     Type: "AWS::ElastiCache::SubnetGroup"
     Properties:
@@ -41,14 +32,6 @@ Resources:
       NumCacheNodes: 1
       VpcSecurityGroupIds:
         - !GetAtt RedisInstanceSecurityGroup.GroupId
-  RDSSubnetGroup:
-    Type: AWS::RDS::DBSubnetGroup
-    Properties:
-      DBSubnetGroupDescription: RDS private subnet Group
-      SubnetIds:
-      - subnet-c08a31a6
-      - subnet-cf830887
-      - subnet-25a2677f
   RDSPrivateSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
