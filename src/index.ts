@@ -1,5 +1,11 @@
 import "source-map-support/register";
 
+import * as Raven from "raven";
+Raven.config(
+  "https://5d9acd9db1fd436db9944f2838e2a993:6ed28463172f48c0b3aaf2c007c9bf34@sentry.telephone-ro.se/3",
+  { autoBreadcrumbs: true, captureUnhandledRejections: true },
+).install();
+
 import { APIGatewayEvent, Callback, Context } from "aws-lambda";
 import { graphql } from "graphql";
 
