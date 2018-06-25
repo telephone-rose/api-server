@@ -59,6 +59,7 @@
     "graphql-date": "^1.0.3",
     "ioredis": "^3.2.2",
     "pg": "^7.4.3",
+    "raven": "^2.6.3",
     "sequelize": "^4.38.0",
     "source-map-support": "^0.5.6"
   },
@@ -70,6 +71,7 @@
     "@types/ioredis": "^3.2.9",
     "@types/mocha": "^5.2.3",
     "@types/node": "^10.3.5",
+    "@types/raven": "^2.5.1",
     "@types/sequelize": "^4.27.23",
     "cross-env": "^5.2.0",
     "dotenv": "^6.0.0",
