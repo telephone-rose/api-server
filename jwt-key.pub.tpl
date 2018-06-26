@@ -1,0 +1,1 @@
+{{ with secret "secret/api" }}{{ .Data.jwtPublicKey }}{{ end }}
