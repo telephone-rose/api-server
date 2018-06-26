@@ -16,7 +16,7 @@ interface IUserAttributes {
   lastName: string;
 }
 
-interface IUserInstance
+export interface IUserInstance
   extends Sequelize.Instance<IUserAttributes>,
     IUserAttributes {
   readonly id: string;

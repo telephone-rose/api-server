@@ -1,1 +1,6 @@
-{}
+{
+  "app": {
+    "jwtAlgorithm": "RS256",
+    "jwtTtl": 3600
+  }
+}
