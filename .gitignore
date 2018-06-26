@@ -7,3 +7,8 @@ serverless-output.yaml
 coverage
 .nyc_output
 .env
+jwt-key.pub
+jwt-key
+/config/*
+!/config/*.json.tpl
+!/config/default.json

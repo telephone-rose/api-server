@@ -50,14 +50,41 @@ pipeline {
       }
     }
 
+    stage("Generate secret templated files") {
+      when { branch "master" }
+
+      agent {
+        dockerfile {
+          filename 'Dockerfile.vault'
+        }
+      }
+
+      environment {
+        VAULT_TOKEN = credentials("VAULT_TOKEN")
+      }
+
+      steps {
+        sh '''
+          set +x
+          export SECRET_ID=$(./vault write -field=secret_id -f auth/approle/role/jenkins/secret-id)
+          export VAULT_TOKEN=$(./vault write -field=token auth/approle/login role_id=8fb710ed-7849-230c-e051-133138593730 secret_id=$SECRET_ID)
+          consul-template -once -vault-token=$VAULT_TOKEN -vault-renew-token=false \ 
+            -template="jwt-key.pub.tpl:jwt-key.pub" \ 
+            -template="jwt-key.tpl:jwt-key" \ 
+            -template="config/production.json.tpl:config/production.json"
+        '''
+      }
+    }
+
     stage("Deploy production") { 
+      when { branch "master" }
+
       agent {
         dockerfile {
           filename 'Dockerfile.build'
         }
       }
 
-      when { branch "master" }
       steps {
         sh "npm run deploy"
       }
