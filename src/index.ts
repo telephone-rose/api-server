@@ -1,10 +1,13 @@
 import "source-map-support/register";
 
+import * as config from "config";
 import * as Raven from "raven";
-Raven.config(
-  "https://5d9acd9db1fd436db9944f2838e2a993:6ed28463172f48c0b3aaf2c007c9bf34@sentry.telephone-ro.se/3",
-  { autoBreadcrumbs: true, captureUnhandledRejections: true },
-).install();
+const ravenDsn = config.get<string>("app.ravenDsn");
+
+Raven.config(ravenDsn, {
+  autoBreadcrumbs: true,
+  captureUnhandledRejections: true,
+}).install();
 
 import { APIGatewayEvent, Callback, Context } from "aws-lambda";
 import { graphql } from "graphql";
@@ -21,6 +24,16 @@ export const graphqlHandler = async (
   callback: Callback,
 ) => {
   try {
+    const raven = new Raven.Client(ravenDsn, {
+      autoBreadcrumbs: true,
+      captureUnhandledRejections: true,
+      extra: {
+        awsRequestId: context.awsRequestId,
+        functionName: context.functionName,
+      },
+      release: context.functionVersion,
+    });
+
     context.callbackWaitsForEmptyEventLoop = false;
 
     const responseHeaders = {
@@ -51,7 +64,7 @@ export const graphqlHandler = async (
       });
     }
 
-    const graphQLContext = makeGraphQLContext();
+    const graphQLContext = makeGraphQLContext({ raven });
 
     if (event.headers && event.headers.authorization) {
       const authHeaderBearerRegexp = /Bearer (.*)/;
@@ -89,6 +102,9 @@ export const graphqlHandler = async (
       if (!user) {
         throw new Error("Unexpected: User found in jwtPayload, but not in db");
       }
+
+      raven.setContext({ user });
+
       graphQLContext.user = user;
     }
 
