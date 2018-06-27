@@ -6,6 +6,10 @@ export interface IGraphQLContext {
   raven: Raven.Client;
 }
 
+export interface IAuthenticatedGraphQLContext extends IGraphQLContext {
+  user: IUserInstance;
+}
+
 export const make = ({ raven }: { raven: Raven.Client }): IGraphQLContext => ({
   raven,
 });
