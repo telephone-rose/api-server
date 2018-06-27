@@ -110,6 +110,7 @@ export const graphqlHandler = async (
 
     const result = await graphql({
       contextValue: graphQLContext,
+      operationName: query.operationName,
       schema,
       source: query.query,
       variableValues: query.variables,
