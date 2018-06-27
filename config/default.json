@@ -1,1 +1,8 @@
-{}
+{
+  "app": {
+    "jwtAlgorithm": "RS256",
+    "jwtTtl": 3600,
+    "ravenDsn":
+      "https://5d9acd9db1fd436db9944f2838e2a993:6ed28463172f48c0b3aaf2c007c9bf34@sentry.telephone-ro.se/3"
+  }
+}
