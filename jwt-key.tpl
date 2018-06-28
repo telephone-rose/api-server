@@ -1,1 +1,0 @@
-{{ with secret "secret/api" }}{{ .Data.jwtPrivateKey }}{{ end }}

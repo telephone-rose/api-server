@@ -86,9 +86,9 @@ export const graphqlHandler = async (
 
       const bearerToken = authHeaderBearerRegexpMatch[1];
 
-      let jwtPayload: null | jwt.IJwtPayload = null;
+      let accessTokenPayload: null | jwt.IAccessTokenPayload = null;
       try {
-        jwtPayload = await jwt.verify(bearerToken);
+        accessTokenPayload = await jwt.verifyAccessToken(bearerToken);
       } catch (e) {
         return callback(null, {
           body: JSON.stringify({
@@ -98,14 +98,15 @@ export const graphqlHandler = async (
           statusCode: 401,
         });
       }
-      const user = await models.User.findById(jwtPayload.user_id);
+      const user = await models.User.findById(accessTokenPayload.user_id);
       if (!user) {
         throw new Error("Unexpected: User found in jwtPayload, but not in db");
       }
 
-      raven.setContext({ user });
+      raven.setContext({ user, accessTokenPayload });
 
       graphQLContext.user = user;
+      graphQLContext.accessTokenPayload = accessTokenPayload;
     }
 
     const result = await graphql({

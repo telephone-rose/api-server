@@ -68,7 +68,7 @@ pipeline {
           set +x
           export SECRET_ID=$(vault write -field=secret_id -f auth/approle/role/jenkins/secret-id)
           export VAULT_TOKEN=$(vault write -field=token auth/approle/login role_id=8fb710ed-7849-230c-e051-133138593730 secret_id=$SECRET_ID)
-          consul-template -once -vault-token=$VAULT_TOKEN -vault-renew-token=false -template="jwt-key.pub.tpl:jwt-key.pub" -template="jwt-key.tpl:jwt-key" -template="config/production.json.tpl:config/production.json"
+          consul-template -once -vault-token=$VAULT_TOKEN -vault-renew-token=false -template="jwt-access-token-key.pub.tpl:jwt-access-token-key.pub" -template="jwt-access-token-key.tpl:jwt-access-token-key" -template="jwt-refresh-token-key.pub.tpl:jwt-refresh-token-key.pub" -template="jwt-refresh-token-key.tpl:jwt-refresh-token-key" -template="config/production.json.tpl:config/production.json"
         '''
       }
     }
