@@ -140,6 +140,28 @@ export const syncHandler = async (
 ) => {
   context.callbackWaitsForEmptyEventLoop = false;
   try {
+    await sequelize.query("create extension IF NOT EXISTS postgis");
+    await sequelize.query("create extension IF NOT EXISTS fuzzystrmatch");
+    await sequelize.query(
+      "create extension IF NOT EXISTS postgis_tiger_geocoder",
+    );
+    await sequelize.query("create extension IF NOT EXISTS postgis_topology");
+
+    await sequelize.query("alter schema tiger owner to rds_superuser");
+    await sequelize.query("alter schema tiger_data owner to rds_superuser");
+    await sequelize.query("alter schema topology owner to rds_superuser");
+    await sequelize.query(
+      "CREATE FUNCTION exec(text) returns text language plpgsql volatile AS $f$ BEGIN EXECUTE $1; RETURN $1; END; $f$;",
+    );
+    await sequelize.query(`
+      SELECT exec('ALTER TABLE ' || quote_ident(s.nspname) || '.' || quote_ident(s.relname) || ' OWNER TO rds_superuser;')
+      FROM (
+        SELECT nspname, relname
+        FROM pg_class c JOIN pg_namespace n ON (c.relnamespace = n.oid) 
+        WHERE nspname in ('tiger','topology') AND
+        relkind IN ('r','S','v') ORDER BY relkind = 'S')
+      s;
+    `);
     await sequelize.sync({ force: true });
   } catch (error) {
     return callback(error);
