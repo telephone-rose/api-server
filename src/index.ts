@@ -4,6 +4,8 @@ import * as config from "config";
 import * as Raven from "raven";
 const ravenDsn = config.get<string>("app.ravenDsn");
 
+import logger from "./logger";
+
 Raven.config(ravenDsn, {
   autoBreadcrumbs: true,
   captureUnhandledRejections: true,
@@ -68,6 +70,8 @@ export const graphqlHandler = async (
     }
 
     const graphQLContext = makeGraphQLContext({ raven });
+
+    logger.info("Headers", event.headers);
 
     if (event.headers && event.headers.authorization) {
       const authHeaderBearerRegexpMatch = authHeaderBearerRegexp.exec(
