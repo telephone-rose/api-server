@@ -117,6 +117,14 @@ export const graphqlHandler = async (
       variableValues: query.variables,
     });
 
+    if (result.errors && result.errors.length) {
+      for (const error of result.errors) {
+        if (error.originalError) {
+          raven.captureException(error.originalError);
+        }
+      }
+    }
+
     return callback(null, {
       body: JSON.stringify(result),
       headers: responseHeaders,
