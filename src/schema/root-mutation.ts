@@ -94,7 +94,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
           throw new Error("Cannot refresh a revoked session");
         }
 
-        return { ...session, fresh: true };
+        return session;
       },
       type: new GraphQLNonNull(Session),
     },

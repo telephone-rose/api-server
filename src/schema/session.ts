@@ -12,9 +12,7 @@ import * as models from "../models";
 import { ISessionInstance } from "../models/session";
 import User, { IUserSource } from "./user";
 
-export interface ISessionSource extends ISessionInstance {
-  fresh?: boolean;
-}
+export interface ISessionSource extends ISessionInstance {}
 
 const config: GraphQLObjectTypeConfig<ISessionSource, IGraphQLContext> = {
   fields: () => ({
@@ -22,14 +20,16 @@ const config: GraphQLObjectTypeConfig<ISessionSource, IGraphQLContext> = {
       description:
         "An expiring JWT token you can inspect to know his expiration date https://jwt.io/",
       resolve: (session): Promise<string> => {
-        if (!session.fresh) {
-          throw new Error("Cannot create an auth token for this session");
-        }
         if (session.revokedAt) {
           throw new Error(
             "Cannot generate an accessToken for a revoked session",
           );
         }
+
+        if (new Date().getTime() - session.createdAt.getTime() > 1000) {
+          throw new Error("Cannot generate authToken for this session");
+        }
+
         return jwt.signAccessToken({
           session_id: session.id,
           user_id: session.userId,
@@ -40,14 +40,16 @@ const config: GraphQLObjectTypeConfig<ISessionSource, IGraphQLContext> = {
     refreshToken: {
       description: "A token to keep so you can refresh your authToken",
       resolve: (session): Promise<string> => {
-        if (!session.fresh) {
-          throw new Error("Cannot create a refresh token for this session");
-        }
         if (session.revokedAt) {
           throw new Error(
             "Cannot generate an refreshToken for a revoked session",
           );
         }
+
+        if (new Date().getTime() - session.createdAt.getTime() > 1000) {
+          throw new Error("Cannot generate refreshToken for this session");
+        }
+
         return jwt.signRefreshToken({
           session_id: session.id,
         });
