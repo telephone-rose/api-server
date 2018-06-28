@@ -14,7 +14,7 @@ pipeline {
 
   stages {
 
-    stage("Build") {
+    stage("Prepare") {
       agent {
         dockerfile {
           filename 'Dockerfile.build'
@@ -22,7 +22,28 @@ pipeline {
       }
       steps {
         sh "npm ci"
+      }
+    }
+
+    stage("Build") {
+      agent {
+        dockerfile {
+          filename 'Dockerfile.build'
+        }
+      }
+      steps {
         sh "npm run build"
+      }
+    }
+
+    stage("Lint") {
+      agent {
+        dockerfile {
+          filename 'Dockerfile.build'
+        }
+      }
+      steps {
+        sh "npm run lint"
       }
     }
 
@@ -40,8 +61,6 @@ pipeline {
           docker.image("postgres").withRun("-e POSTGRES_PASSWORD=${env.DB_PASSWORD} -e POSTGRES_USER=${env.DB_USERNAME} -e POSTGRES_DB=${env.DB_NAME}") { pgContainer ->
             docker.image("redis").withRun("") { redisContainer ->
               docker.image('node').inside("--link ${pgContainer.id}:pg --link ${redisContainer.id}:redis") {
-                sh "npm ci"
-                sh "npm run lint"
                 sh "npm test"
               }
             }
