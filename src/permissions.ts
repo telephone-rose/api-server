@@ -1,7 +1,8 @@
 import { IAuthenticatedGraphQLContext, IGraphQLContext } from "./context";
+import { ClientError } from "./errors";
 import { IUserInstance } from "./models/user";
 
-const _makeError = () => new Error("Validation error");
+const _makeError = () => new ClientError("PERMISSION_DENIED");
 
 export const assert = <T>(
   validator: (value: T) => boolean,

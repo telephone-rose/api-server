@@ -1,5 +1,6 @@
 import * as config from "config";
 import { OAuth2Client } from "google-auth-library";
+import { ClientError } from "./errors";
 
 const googleClientId = config.get<string>("app.googleClientId");
 const googleClientSecret = config.get<string>("app.googleClientSecret");
@@ -14,11 +15,11 @@ export const verify = async (token: string) => {
     idToken: token,
   });
   if (!ticket) {
-    throw new Error("Google auth error, cannot verifyIdToken");
+    throw new ClientError("GOOGLE_AUHT_ERROR_CANNOT_VERIFY_ID_TOKEN");
   }
   const payload = ticket.getPayload();
   if (!payload) {
-    throw new Error("Google auth error, cannot get payload");
+    throw new ClientError("GOOGLE_AUHT_ERROR_CANNOT_GET_TOKEN_PAYLOAD");
   }
   if (
     !payload.email ||
@@ -26,7 +27,9 @@ export const verify = async (token: string) => {
     !payload.family_name ||
     !payload.given_name
   ) {
-    throw new Error("Google auth, insufficient permissions");
+    throw new ClientError("GOOGLE_AUTH_ERROR_INSUFFICIENT_TOKEN_PERMISSIONS", {
+      got: { payload },
+    });
   }
 
   return {

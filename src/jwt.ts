@@ -2,6 +2,7 @@ import * as config from "config";
 import * as fs from "fs";
 import * as jwt from "jsonwebtoken";
 import * as path from "path";
+import { ClientError, InternalServerError } from "./errors";
 
 const jwtAccessTokenSigninAlgorithm = config.get<string>(
   "app.jwtAccessTokenAlgorithm",
@@ -77,10 +78,9 @@ const sign = (
 
 export const signAccessToken = (payload: IAccessTokenPayload) => {
   if (!isAStrictlyValidAccessTokenPayload(payload)) {
-    throw new Error(
-      `Unexpected, cannot encode this JWT access token, not a valid payload, ${JSON.stringify(
-        payload,
-      )}`,
+    throw new InternalServerError(
+      "Cannot encode this JWT access token, not a valid payload",
+      { payload },
     );
   }
 
@@ -94,8 +94,9 @@ export const signAccessToken = (payload: IAccessTokenPayload) => {
 
 export const signRefreshToken = (payload: IRefreshTokenPayload) => {
   if (!isAStrictlyValidRefreshTokenPayload(payload)) {
-    throw new Error(
-      "Unexpected, cannot encode this JWT refresh token token, not a valid payload",
+    throw new InternalServerError(
+      "Cannot encode this JWT refresh token token, not a valid payload",
+      payload,
     );
   }
 
@@ -124,7 +125,7 @@ export const verifyAccessToken = async (token: string) => {
     jwtAccessTokenSigninAlgorithm,
   );
   if (!isAValidAccessTokenPayload(payload)) {
-    throw new Error("Not a valid access token");
+    throw new ClientError("INVALID_ACCESS_TOKEN");
   }
 
   return payload;
@@ -137,7 +138,7 @@ export const verifyRefreshToken = async (token: string) => {
     jwtRefreshTokenSigninAlgorithm,
   );
   if (!isAValidRefreshTokenPayload(payload)) {
-    throw new Error("Not a valid refresh token");
+    throw new ClientError("INVALID_REFRESH_TOKEN");
   }
 
   return payload;

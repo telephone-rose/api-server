@@ -13,6 +13,7 @@ import { APIGatewayEvent, Callback, Context } from "aws-lambda";
 import { graphql } from "graphql";
 
 import { make as makeGraphQLContext } from "./context";
+import { formatGraphQLErrors, InternalServerError } from "./errors";
 import * as jwt from "./jwt";
 import { sequelize } from "./models";
 import * as models from "./models";
@@ -76,7 +77,7 @@ export const graphqlHandler = async (
         return callback(null, {
           body: JSON.stringify({
             error: "Invalid authorization bearer format",
-            expected: "Bearer: *token*",
+            expected: "Bearer (token)",
             got: event.headers.authorization,
           }),
           headers: responseHeaders,
@@ -100,7 +101,7 @@ export const graphqlHandler = async (
       }
       const user = await models.User.findById(accessTokenPayload.user_id);
       if (!user) {
-        throw new Error("Unexpected: User found in jwtPayload, but not in db");
+        throw new InternalServerError("User not found", { accessTokenPayload });
       }
 
       raven.setContext({ user, accessTokenPayload });
@@ -117,18 +118,11 @@ export const graphqlHandler = async (
       variableValues: query.variables,
     });
 
-    if (result.errors && result.errors.length) {
-      for (const error of result.errors) {
-        if (error.originalError) {
-          raven.captureException(error.originalError);
-        } else {
-          raven.captureException(error);
-        }
-      }
-    }
-
     return callback(null, {
-      body: JSON.stringify(result),
+      body: JSON.stringify({
+        ...result,
+        errors: result.errors && formatGraphQLErrors(result.errors, raven),
+      }),
       headers: responseHeaders,
       statusCode: 200,
     });

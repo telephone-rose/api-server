@@ -9,6 +9,7 @@ import {
 } from "graphql";
 
 import { IGraphQLContext } from "../context";
+import { ClientError, InternalServerError } from "../errors";
 import * as googleAuth from "../google-auth";
 import * as jwt from "../jwt";
 import * as models from "../models";
@@ -89,12 +90,13 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
           refreshTokenPayload.session_id,
         );
         if (!session) {
-          throw new Error(
+          throw new InternalServerError(
             "Unexpected: valid refresh token but session not found",
+            { refreshTokenPayload },
           );
         }
         if (session.revokedAt) {
-          throw new Error("Cannot refresh a revoked session");
+          throw new ClientError("SESSION_REVOKED");
         }
 
         return session;
@@ -136,7 +138,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
       ): Promise<ISessionSource> => {
         const session = await models.Session.findById(sessionId);
         if (!session || !context.user || context.user.id !== session.id) {
-          throw new Error("Session not found");
+          throw new ClientError("SESSION_NOT_FOUND");
         }
         session.revokedAt = new Date();
         await session.save();

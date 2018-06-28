@@ -65,7 +65,8 @@
     "pg": "^7.4.3",
     "raven": "^2.6.3",
     "sequelize": "^4.38.0",
-    "source-map-support": "^0.5.6"
+    "source-map-support": "^0.5.6",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.7",
@@ -79,6 +80,7 @@
     "@types/node": "^10.3.5",
     "@types/raven": "^2.5.1",
     "@types/sequelize": "^4.27.23",
+    "@types/uuid": "^3.4.3",
     "cross-env": "^5.2.0",
     "husky": "^0.14.3",
     "lint-staged": "^7.2.0",
