@@ -57,7 +57,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
           userId: user.id,
         });
 
-        return { ...session, fresh: true };
+        return session;
       },
       type: new GraphQLNonNull(Session),
     },
