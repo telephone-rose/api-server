@@ -4,8 +4,6 @@ import * as config from "config";
 import * as Raven from "raven";
 const ravenDsn = config.get<string>("app.ravenDsn");
 
-import logger from "./logger";
-
 Raven.config(ravenDsn, {
   autoBreadcrumbs: true,
   captureUnhandledRejections: true,
@@ -71,11 +69,9 @@ export const graphqlHandler = async (
 
     const graphQLContext = makeGraphQLContext({ raven });
 
-    logger.info("Headers", event.headers);
-
-    if (event.headers && event.headers.authorization) {
+    if (event.headers && event.headers.Authorization) {
       const authHeaderBearerRegexpMatch = authHeaderBearerRegexp.exec(
-        event.headers.authorization,
+        event.headers.Authorization,
       );
 
       if (!authHeaderBearerRegexpMatch) {
@@ -83,7 +79,7 @@ export const graphqlHandler = async (
           body: JSON.stringify({
             error: "Invalid authorization bearer format",
             expected: "Bearer (token)",
-            got: event.headers.authorization,
+            got: event.headers.Authorization,
           }),
           headers: responseHeaders,
           statusCode: 400,
