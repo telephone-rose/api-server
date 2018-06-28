@@ -78,7 +78,9 @@ const sign = (
 export const signAccessToken = (payload: IAccessTokenPayload) => {
   if (!isAStrictlyValidAccessTokenPayload(payload)) {
     throw new Error(
-      "Unexpected, cannot encode this JWT access token token, not a valid payload",
+      `Unexpected, cannot encode this JWT access token, not a valid payload, ${JSON.stringify(
+        payload,
+      )}`,
     );
   }
 

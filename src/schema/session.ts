@@ -25,6 +25,11 @@ const config: GraphQLObjectTypeConfig<ISessionSource, IGraphQLContext> = {
         if (!session.fresh) {
           throw new Error("Cannot create an auth token for this session");
         }
+        if (session.revokedAt) {
+          throw new Error(
+            "Cannot generate an accessToken for a revoked session",
+          );
+        }
         return jwt.signAccessToken({
           session_id: session.id,
           user_id: session.userId,
@@ -37,6 +42,11 @@ const config: GraphQLObjectTypeConfig<ISessionSource, IGraphQLContext> = {
       resolve: (session): Promise<string> => {
         if (!session.fresh) {
           throw new Error("Cannot create a refresh token for this session");
+        }
+        if (session.revokedAt) {
+          throw new Error(
+            "Cannot generate an refreshToken for a revoked session",
+          );
         }
         return jwt.signRefreshToken({
           session_id: session.id,
