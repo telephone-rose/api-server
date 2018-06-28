@@ -121,6 +121,8 @@ export const graphqlHandler = async (
       for (const error of result.errors) {
         if (error.originalError) {
           raven.captureException(error.originalError);
+        } else {
+          raven.captureException(error);
         }
       }
     }
