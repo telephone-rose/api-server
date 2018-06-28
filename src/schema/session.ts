@@ -64,7 +64,7 @@ const config: GraphQLObjectTypeConfig<ISessionSource, IGraphQLContext> = {
     },
     user: {
       resolve: async (session): Promise<IUserSource> => {
-        const user = await models.User.findById(session.id);
+        const user = await models.User.findById(session.userId);
         if (!user) {
           throw new Error("Unexpected: User not found");
         }
