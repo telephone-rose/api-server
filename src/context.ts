@@ -1,7 +1,10 @@
 import * as Raven from "raven";
-import { IUserInstance } from "./models";
+
+import { IAccessTokenPayload } from "./jwt";
+import { IUserInstance } from "./models/user";
 
 export interface IGraphQLContext {
+  accessTokenPayload?: IAccessTokenPayload;
   user?: IUserInstance;
   raven: Raven.Client;
 }

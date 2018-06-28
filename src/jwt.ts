@@ -3,36 +3,67 @@ import * as fs from "fs";
 import * as jwt from "jsonwebtoken";
 import * as path from "path";
 
-const jwtSigninAlgorithm = config.get<string>("app.jwtAlgorithm");
-const jwtExpiration = config.get<number>("app.jwtTtl");
-const jwtSigninKey = jwtSigninAlgorithm.startsWith("RS")
-  ? fs.readFileSync(path.join(__dirname, "jwt-key"))
-  : config.get<string>("app.jwtKey");
-const jwtPublicKey = jwtSigninAlgorithm.startsWith("RS")
-  ? fs.readFileSync(path.join(__dirname, "jwt-key.pub"))
-  : config.get<string>("app.jwtKey");
+const jwtAccessTokenSigninAlgorithm = config.get<string>(
+  "app.jwtAccessTokenAlgorithm",
+);
+const jwtRefreshTokenSigninAlgorithm = config.get<string>(
+  "app.jwtRefreshTokenAlgorithm",
+);
+const jwtAccessTokenExpiration = config.get<string>("app.jwtAccessTokenTtl");
+const jwtRefreshTokenExpiration = config.get<string>("app.jwtRefreshTokenTtl");
+const jwtAccessTokenSigninKey = jwtAccessTokenSigninAlgorithm.startsWith("RS")
+  ? fs.readFileSync(path.join(__dirname, "jwt-access-token-key"))
+  : config.get<string>("app.jwtAccessTokenKey");
+export const jwtAccessTokenPublicKey = jwtAccessTokenSigninAlgorithm.startsWith(
+  "RS",
+)
+  ? fs.readFileSync(path.join(__dirname, "jwt-access-token-key.pub"))
+  : config.get<string>("app.jwtAccessTokenKey");
+const jwtRefreshTokenSigninKey = jwtRefreshTokenSigninAlgorithm.startsWith("RS")
+  ? fs.readFileSync(path.join(__dirname, "jwt-refresh-token-key"))
+  : config.get<string>("app.jwtRefreshTokenKey");
+export const jwtRefreshTokenPublicKey = jwtRefreshTokenSigninAlgorithm.startsWith(
+  "RS",
+)
+  ? fs.readFileSync(path.join(__dirname, "jwt-refresh-token-key.pub"))
+  : config.get<string>("app.jwtRefreshTokenKey");
 
-export interface IJwtPayload {
+export interface IAccessTokenPayload {
   user_id: string;
   session_id: string;
 }
 
-const isAValidPayload = (x: any): x is IJwtPayload =>
+export interface IRefreshTokenPayload {
+  session_id: string;
+}
+
+const isAValidAccessTokenPayload = (x: any): x is IAccessTokenPayload =>
   x && typeof x.user_id === "string" && typeof x.session_id === "string";
 
-export const sign = (payload: any) => {
-  if (!isAValidPayload(payload)) {
-    throw new Error(
-      "Unexpected, cannot encore this JWT token, not a valid payload",
-    );
-  }
+const isAStrictlyValidAccessTokenPayload = (x: any): x is IAccessTokenPayload =>
+  isAValidAccessTokenPayload(x) && Object.keys(x).length === 2;
+
+const isAValidRefreshTokenPayload = (x: any): x is IRefreshTokenPayload =>
+  x && typeof x.session_id === "string";
+
+const isAStrictlyValidRefreshTokenPayload = (
+  x: any,
+): x is IRefreshTokenPayload =>
+  isAValidRefreshTokenPayload(x) && Object.keys(x).length === 1;
+
+const sign = (
+  payload: any,
+  algorithm: string,
+  signinKey: string | Buffer,
+  expiresIn: string,
+) => {
   return new Promise<string>((resolve, reject) => {
     jwt.sign(
       payload,
-      jwtSigninKey,
+      signinKey,
       {
-        algorithm: jwtSigninAlgorithm,
-        expiresIn: jwtExpiration,
+        algorithm,
+        expiresIn,
       },
       (err, token) => {
         if (err) {
@@ -44,19 +75,68 @@ export const sign = (payload: any) => {
   });
 };
 
-export const verify = (token: string) =>
-  new Promise<IJwtPayload>((resolve, reject) => {
-    jwt.verify(token, jwtPublicKey, {}, (err, payload) => {
+export const signAccessToken = (payload: IAccessTokenPayload) => {
+  if (!isAStrictlyValidAccessTokenPayload(payload)) {
+    throw new Error(
+      "Unexpected, cannot encode this JWT access token token, not a valid payload",
+    );
+  }
+
+  return sign(
+    payload,
+    jwtAccessTokenSigninAlgorithm,
+    jwtAccessTokenSigninKey,
+    jwtAccessTokenExpiration,
+  );
+};
+
+export const signRefreshToken = (payload: IRefreshTokenPayload) => {
+  if (!isAStrictlyValidRefreshTokenPayload(payload)) {
+    throw new Error(
+      "Unexpected, cannot encode this JWT refresh token token, not a valid payload",
+    );
+  }
+
+  return sign(
+    payload,
+    jwtRefreshTokenSigninAlgorithm,
+    jwtRefreshTokenSigninKey,
+    jwtRefreshTokenExpiration,
+  );
+};
+
+const verify = (token: string, key: Buffer | string, algorithm: string) =>
+  new Promise<any>((resolve, reject) => {
+    jwt.verify(token, key, { algorithms: [algorithm] }, (err, payload) => {
       if (err) {
         return reject(err);
-      }
-      if (!isAValidPayload(payload)) {
-        return reject(
-          new Error(
-            `Unexpected: JWT Token decoded, but do not contains a valid payload`,
-          ),
-        );
       }
       return resolve(payload);
     });
   });
+
+export const verifyAccessToken = async (token: string) => {
+  const payload = await verify(
+    token,
+    jwtAccessTokenPublicKey,
+    jwtAccessTokenSigninAlgorithm,
+  );
+  if (!isAValidAccessTokenPayload(payload)) {
+    throw new Error("Not a valid access token");
+  }
+
+  return payload;
+};
+
+export const verifyRefreshToken = async (token: string) => {
+  const payload = await verify(
+    token,
+    jwtRefreshTokenPublicKey,
+    jwtRefreshTokenSigninAlgorithm,
+  );
+  if (!isAValidRefreshTokenPayload(payload)) {
+    throw new Error("Not a valid refresh token");
+  }
+
+  return payload;
+};
