@@ -19,6 +19,8 @@ import { sequelize } from "./models";
 import * as models from "./models";
 import schema from "./schema";
 
+const authHeaderBearerRegexp = /Bearer (.*)/;
+
 export const graphqlHandler = async (
   event: APIGatewayEvent,
   context: Context,
@@ -68,7 +70,6 @@ export const graphqlHandler = async (
     const graphQLContext = makeGraphQLContext({ raven });
 
     if (event.headers && event.headers.authorization) {
-      const authHeaderBearerRegexp = /Bearer (.*)/;
       const authHeaderBearerRegexpMatch = authHeaderBearerRegexp.exec(
         event.headers.authorization,
       );
