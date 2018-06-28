@@ -6,9 +6,11 @@ import {
   GraphQLString,
 } from "graphql";
 
-import User from "./user";
+import { IGraphQLContext } from "../context";
+import * as permisssions from "../permissions";
+import User, { IUserSource } from "./user";
 
-const config: GraphQLObjectTypeConfig<{}, {}> = {
+const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
   fields: () => ({
     ip: {
       description: "Only usefull for debuging purpose",
@@ -20,6 +22,11 @@ const config: GraphQLObjectTypeConfig<{}, {}> = {
       type: new GraphQLNonNull(GraphQLString),
     },
     me: {
+      resolve: (_, __, context): IUserSource => {
+        permisssions.assert(permisssions.isAuthenticated)(context);
+
+        return context.user!;
+      },
       type: new GraphQLNonNull(User),
     },
   }),

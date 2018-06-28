@@ -8,19 +8,56 @@ import {
   GraphQLString,
 } from "graphql";
 
+import { IGraphQLContext } from "../context";
+import * as googleAuth from "../google-auth";
+import * as jwt from "../jwt";
+import * as models from "../models";
 import DeviceType from "./device-type";
 import File from "./file";
 import GeometryPointInput from "./geometry-point-input";
 import Message from "./message";
-import Session from "./session";
+import Session, { ISessionSource } from "./session";
 
-const config: GraphQLObjectTypeConfig<{}, {}> = {
+const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
   fields: () => ({
     loginUsingFacebook: {
       args: {
         facebookToken: {
           type: new GraphQLNonNull(GraphQLString),
         },
+      },
+      type: new GraphQLNonNull(Session),
+    },
+    loginUsingGoogle: {
+      args: {
+        googleIdToken: {
+          type: new GraphQLNonNull(GraphQLString),
+        },
+      },
+      resolve: async (
+        _,
+        { googleIdToken }: { googleIdToken: string },
+      ): Promise<ISessionSource> => {
+        const googleCreds = await googleAuth.verify(googleIdToken);
+        let user = await models.User.find({
+          where: { googleId: googleCreds.id },
+        });
+        if (!user) {
+          user = await models.User.create({
+            email: googleCreds.email,
+            facebookId: null,
+            firstName: googleCreds.firstName,
+            googleId: googleCreds.id,
+            lastName: googleCreds.lastName,
+            location: null,
+          });
+        }
+        const session = await models.Session.create({
+          revokedAt: null,
+          userId: user.id,
+        });
+
+        return { ...session, fresh: true };
       },
       type: new GraphQLNonNull(Session),
     },
@@ -39,6 +76,25 @@ const config: GraphQLObjectTypeConfig<{}, {}> = {
         refreshToken: {
           type: new GraphQLNonNull(GraphQLString),
         },
+      },
+      resolve: async (
+        _,
+        { refreshToken }: { refreshToken: string },
+      ): Promise<ISessionSource> => {
+        const refreshTokenPayload = await jwt.verifyRefreshToken(refreshToken);
+        const session = await models.Session.findById(
+          refreshTokenPayload.session_id,
+        );
+        if (!session) {
+          throw new Error(
+            "Unexpected: valid refresh token but session not found",
+          );
+        }
+        if (session.revokedAt) {
+          throw new Error("Cannot refresh a revoked session");
+        }
+
+        return { ...session, fresh: true };
       },
       type: new GraphQLNonNull(Session),
     },
@@ -65,6 +121,26 @@ const config: GraphQLObjectTypeConfig<{}, {}> = {
         },
       },
       type: new GraphQLNonNull(File),
+    },
+    revokeSessions: {
+      args: {
+        sessionId: { type: new GraphQLNonNull(GraphQLString) },
+      },
+      resolve: async (
+        _,
+        { sessionId }: { sessionId: string },
+        context,
+      ): Promise<ISessionSource> => {
+        const session = await models.Session.findById(sessionId);
+        if (!session || !context.user || context.user.id !== session.id) {
+          throw new Error("Session not found");
+        }
+        session.revokedAt = new Date();
+        await session.save();
+
+        return session;
+      },
+      type: new GraphQLNonNull(Session),
     },
     sendMessage: {
       args: {

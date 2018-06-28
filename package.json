@@ -13,7 +13,7 @@
     "package":
       "aws cloudformation package --template-file template.yaml --output-template-file serverless-output.yaml --s3-bucket graphql-api-server-lambda-function",
     "copy":
-      "mkdir dist && cp -rf lib/* package*.json jwt-key jwt-key.pub config dist && cd dist && npm ci --production && cd -",
+      "mkdir dist && cp -rf lib/* package*.json jwt-access-token-key jwt-acces-token-key.pub jwt-refresh-token-key jwt-refresh-token-key.pub config dist && cd dist && npm ci --production && cd -",
     "deploy":
       "npm run clean && npm run build && npm run copy && npm run package && aws cloudformation deploy --template-file serverless-output.yaml --stack-name graphql-api --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset"
   },
@@ -22,7 +22,7 @@
     "url": "git+https://github.com/telephone-rose/api-server.git"
   },
   "keywords": ["GraphQL", "Lambda", "Serverless"],
-  "author": "Telephone Rose",
+  "author": "Telephone Rose <team@telephone-ro.se>",
   "private": true,
   "bugs": {
     "url": "https://github.com/telephone-rose/api-server/issues"
@@ -55,8 +55,9 @@
   "dependencies": {
     "apollo-server-lambda": "^1.3.6",
     "aws-sdk": "^2.263.1",
-    "config": "^1.30.0",
     "axios": "^0.18.0",
+    "config": "^1.30.0",
+    "google-auth-library": "^1.6.1",
     "graphql": "^0.13.2",
     "graphql-date": "^1.0.3",
     "ioredis": "^3.2.2",
