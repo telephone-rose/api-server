@@ -37,6 +37,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
       resolve: async (
         _,
         { googleIdToken }: { googleIdToken: string },
+        context,
       ): Promise<ISessionSource> => {
         const googleCreds = await googleAuth.verify(googleIdToken);
         let user = await models.User.find({
@@ -56,6 +57,8 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
           revokedAt: null,
           userId: user.id,
         });
+
+        context.user = user;
 
         return session;
       },
