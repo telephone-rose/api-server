@@ -14,10 +14,15 @@ export const verify = async (token: string) => {
 
   const meResult = await axios.get(
     `https://graph.facebook.com/me?fields=id,email,first_name,last_name&access_token=${token}&appsecret_proof=${hash}`,
+    { validateStatus: () => true },
   );
 
-  if (meResult.status !== 200) {
-    throw new ClientError("FACEBOOK_AUTH_ERROR_CANNOT_VERIFY_ID_TOKEN");
+  if (meResult.status >= 300 || meResult.status < 200) {
+    throw new ClientError("FACEBOOK_AUTH_ERROR_CANNOT_VERIFY_ID_TOKEN", {
+      data: meResult.data,
+      status: meResult.status,
+      statusText: meResult.statusText,
+    });
   }
 
   if (
