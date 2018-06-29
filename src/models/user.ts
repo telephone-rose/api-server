@@ -33,6 +33,7 @@ export default (sequelize: Sequelize.Sequelize) =>
       facebookId: {
         allowNull: true,
         type: Sequelize.STRING,
+        unique: true,
       },
       firstName: {
         allowNull: false,
@@ -41,6 +42,7 @@ export default (sequelize: Sequelize.Sequelize) =>
       googleId: {
         allowNull: true,
         type: Sequelize.STRING,
+        unique: true,
       },
       id: {
         allowNull: false,

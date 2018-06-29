@@ -34,18 +34,29 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
         context,
       ): Promise<ISessionSource> => {
         const facebookCreds = await facebookAuth.verify(facebookToken);
+
         let user = await models.User.find({
           where: { facebookId: facebookCreds.id },
         });
         if (!user) {
-          user = await models.User.create({
-            email: facebookCreds.email,
-            facebookId: facebookCreds.id,
-            firstName: facebookCreds.firstName,
-            googleId: null,
-            lastName: facebookCreds.lastName,
-            location: null,
+          user = await models.User.find({
+            where: { email: facebookCreds.email },
           });
+          if (user) {
+            user.facebookId = facebookCreds.id;
+            await user.save();
+          }
+
+          if (!user) {
+            user = await models.User.create({
+              email: facebookCreds.email,
+              facebookId: facebookCreds.id,
+              firstName: facebookCreds.firstName,
+              googleId: null,
+              lastName: facebookCreds.lastName,
+              location: null,
+            });
+          }
         }
         const session = await models.Session.create({
           revokedAt: null,
@@ -74,14 +85,25 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
           where: { googleId: googleCreds.id },
         });
         if (!user) {
-          user = await models.User.create({
-            email: googleCreds.email,
-            facebookId: null,
-            firstName: googleCreds.firstName,
-            googleId: googleCreds.id,
-            lastName: googleCreds.lastName,
-            location: null,
+          user = await models.User.find({
+            where: { email: googleCreds.email },
           });
+
+          if (user) {
+            user.googleId = googleCreds.id;
+            await user.save();
+          }
+
+          if (!user) {
+            user = await models.User.create({
+              email: googleCreds.email,
+              facebookId: null,
+              firstName: googleCreds.firstName,
+              googleId: googleCreds.id,
+              lastName: googleCreds.lastName,
+              location: null,
+            });
+          }
         }
         const session = await models.Session.create({
           revokedAt: null,
