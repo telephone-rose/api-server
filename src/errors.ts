@@ -2,7 +2,11 @@ import { GraphQLError } from "graphql";
 import * as Raven from "raven";
 import * as uuid from "uuid";
 
+import logger from "./logger";
+
 export class InternalServerError extends Error {
+  public name = "InternalServerError";
+
   constructor(
     public message: string,
     public extra: { [key: string]: any } = {},
@@ -24,6 +28,8 @@ type TClientErrorCode =
   | "SESSION_NOT_FOUND";
 
 export class ClientError extends Error {
+  public name = "ClientError";
+
   constructor(
     public code: TClientErrorCode,
     public extra: { [key: string]: any } = {},
@@ -39,6 +45,16 @@ export const formatGraphQLErrors = (
   errors.map(error => {
     const id = uuid.v4();
     if (error.originalError) {
+      logger.info("Error", {
+        error,
+        "error.name": error.name,
+        "error.originalError": error.originalError,
+        "error.originalError instanceof ClientError":
+          error.originalError instanceof ClientError,
+        "error.originalError instanceof InternalServerError":
+          error.originalError instanceof InternalServerError,
+        "error.originalError.name": error.originalError.name,
+      });
       if (error.originalError instanceof InternalServerError) {
         raven.captureException(error, {
           extra: {
