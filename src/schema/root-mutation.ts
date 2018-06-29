@@ -10,6 +10,7 @@ import {
 
 import { IGraphQLContext } from "../context";
 import { ClientError, InternalServerError } from "../errors";
+import * as facebookAuth from "../facebook-auth";
 import * as googleAuth from "../google-auth";
 import * as jwt from "../jwt";
 import * as models from "../models";
@@ -26,6 +27,34 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
         facebookToken: {
           type: new GraphQLNonNull(GraphQLString),
         },
+      },
+      resolve: async (
+        _,
+        { facebookToken }: { facebookToken: string },
+        context,
+      ): Promise<ISessionSource> => {
+        const facebookCreds = await facebookAuth.verify(facebookToken);
+        let user = await models.User.find({
+          where: { facebookId: facebookCreds.id },
+        });
+        if (!user) {
+          user = await models.User.create({
+            email: facebookCreds.email,
+            facebookId: facebookCreds.id,
+            firstName: facebookCreds.firstName,
+            googleId: null,
+            lastName: facebookCreds.lastName,
+            location: null,
+          });
+        }
+        const session = await models.Session.create({
+          revokedAt: null,
+          userId: user.id,
+        });
+
+        context.user = user;
+
+        return session;
       },
       type: new GraphQLNonNull(Session),
     },

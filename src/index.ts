@@ -77,6 +77,7 @@ export const graphqlHandler = async (
       if (!authHeaderBearerRegexpMatch) {
         return callback(null, {
           body: JSON.stringify({
+            code: "INVALID_JWT_TOKEN",
             error: "Invalid authorization bearer format",
             expected: "Bearer (token)",
             got: event.headers.Authorization,
@@ -94,6 +95,7 @@ export const graphqlHandler = async (
       } catch (e) {
         return callback(null, {
           body: JSON.stringify({
+            code: "INVALID_JWT_TOKEN",
             error: "Invalid jwt token",
           }),
           headers: responseHeaders,
