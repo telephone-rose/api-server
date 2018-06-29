@@ -28,7 +28,7 @@ export class ClientError extends Error {
     public code: TClientErrorCode,
     public extra: { [key: string]: any } = {},
   ) {
-    super();
+    super(code);
   }
 }
 
