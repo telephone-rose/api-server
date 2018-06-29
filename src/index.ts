@@ -158,7 +158,7 @@ export const syncHandler = async (
     await sequelize.query("alter schema tiger_data owner to rds_superuser");
     await sequelize.query("alter schema topology owner to rds_superuser");
     await sequelize.query(
-      "CREATE FUNCTION exec(text) returns text language plpgsql volatile AS $f$ BEGIN EXECUTE $1; RETURN $1; END; $f$;",
+      "CREATE OR REPLACE FUNCTION exec(text) returns text language plpgsql volatile AS $f$ BEGIN EXECUTE $1; RETURN $1; END; $f$;",
     );
     await sequelize.query(`
       SELECT exec('ALTER TABLE ' || quote_ident(s.nspname) || '.' || quote_ident(s.relname) || ' OWNER TO rds_superuser;')
