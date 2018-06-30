@@ -67,6 +67,12 @@ export default (sequelize: Sequelize.Sequelize) =>
         {
           fields: ["googleId"],
         },
+        {
+          fields: ["location"],
+        },
+        {
+          fields: ["email"],
+        },
       ],
     },
   );

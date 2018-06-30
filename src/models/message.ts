@@ -2,7 +2,6 @@ import * as Sequelize from "sequelize";
 
 interface IMessageAttributes {
   conversationId: string;
-  recipientId: string;
   recordingFileId: string;
   senderId: string;
 }
@@ -23,10 +22,6 @@ export default (sequelize: Sequelize.Sequelize) =>
         allowNull: false,
         type: Sequelize.UUID,
       },
-      recipientId: {
-        allowNull: false,
-        type: Sequelize.UUID,
-      },
       recordingFileId: {
         allowNull: false,
         type: Sequelize.UUID,
@@ -39,8 +34,8 @@ export default (sequelize: Sequelize.Sequelize) =>
     {
       indexes: [
         { fields: ["senderId"] },
-        { fields: ["recipientId"] },
         { fields: ["conversationId"] },
+        { fields: ["createdAt"] },
       ],
     },
   );
