@@ -43,6 +43,8 @@ pipeline {
       steps {
         sh "npm ci"
         sh "npm run build"
+        sh "ls"
+        sh "ls config"
       }
     }
 
