@@ -1,5 +1,6 @@
 import * as config from "config";
 import * as Sequelize from "sequelize";
+import logger from "../logger";
 
 import conversationDefinition from "./conversation";
 import conversationUserDefinition from "./conversation-user";
@@ -14,6 +15,8 @@ const pgUri = config.has("app.pgUri")
   : `postgres://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${
       process.env.DB_HOST
     }/${process.env.DB_NAME}`;
+
+logger.info("PG", { hasPg: config.has("app.pgUri"), pgUri });
 
 export const sequelize = new Sequelize(pgUri, {
   dialect: "postgres",
