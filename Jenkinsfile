@@ -56,9 +56,17 @@ pipeline {
         DB_PASSWORD = "password"
         DB_USERNAME = "postgres"
         NODE_ENV    = "test"
+        VAULT_TOKEN = credentials("VAULT_TOKEN")
       }
       steps {
         script {
+          docker.build("telephone-rose-vault:${env.BUILD_ID}", "-f Dockerfile.vault ./").inside() {
+            sh '''
+              set +x
+              ./generate-templates.sh
+            '''
+            sh "ls config"
+          }
           docker.image("postgres").withRun("-e POSTGRES_PASSWORD=${env.DB_PASSWORD} -e POSTGRES_USER=${env.DB_USERNAME} -e POSTGRES_DB=${env.DB_NAME}") { pgContainer ->
             sh "ls config"
             docker.image('postgres').inside("--link ${pgContainer.id}:pg") {
