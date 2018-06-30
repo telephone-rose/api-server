@@ -6,11 +6,15 @@ import {
   GraphQLString,
 } from "graphql";
 
+import { IGraphQLContext } from "../context";
+import { IMessageInstance } from "../models/message";
 import conversation from "./conversation";
 import File from "./file";
 import User from "./user";
 
-const config: GraphQLObjectTypeConfig<{}, {}> = {
+export interface IMessageSource extends IMessageInstance {}
+
+const config: GraphQLObjectTypeConfig<IMessageSource, IGraphQLContext> = {
   fields: () => ({
     conversation: {
       type: new GraphQLNonNull(conversation),

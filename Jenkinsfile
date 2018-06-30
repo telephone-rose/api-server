@@ -31,6 +31,7 @@ pipeline {
           set +x
           ./generate-templates.sh
         '''
+        sh "ls config"
       }
     }
 
