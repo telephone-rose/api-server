@@ -19,9 +19,7 @@ export const verify = async (token: string) => {
 
   if (meResult.status >= 300 || meResult.status < 200) {
     throw new ClientError("FACEBOOK_AUTH_ERROR_CANNOT_VERIFY_ID_TOKEN", {
-      data: meResult.data,
-      status: meResult.status,
-      statusText: meResult.statusText,
+      remoteError: meResult.data.error,
     });
   }
 

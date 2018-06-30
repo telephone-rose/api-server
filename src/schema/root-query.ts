@@ -7,13 +7,13 @@ import {
 } from "graphql";
 
 import { IGraphQLContext } from "../context";
-import * as permisssions from "../permissions";
+import * as permissions from "../permissions";
 import User, { IUserSource } from "./user";
 
 const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
   fields: () => ({
     ip: {
-      description: "Only usefull for debuging purpose",
+      description: "Only useful for debugging purpose",
       resolve: async () => {
         const result = await axios.get("https://api.ipify.org?format=json");
 
@@ -23,7 +23,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
     },
     me: {
       resolve: (_, __, context): IUserSource => {
-        permisssions.assert(permisssions.isAuthenticated)(context);
+        permissions.assert(permissions.isAuthenticated)(context);
 
         return context.user!;
       },

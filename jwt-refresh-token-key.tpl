@@ -1,1 +1,1 @@
-{{ with secret "secret/api" }}{{ .Data.jwtRefreshTokenPrivateKey }}{{ end }}
+{{ with secret "secret/api/production" }}{{ .Data.jwtRefreshTokenPrivateKey }}{{ end }}

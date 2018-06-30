@@ -15,11 +15,11 @@ export const verify = async (token: string) => {
     idToken: token,
   });
   if (!ticket) {
-    throw new ClientError("GOOGLE_AUHT_ERROR_CANNOT_VERIFY_ID_TOKEN");
+    throw new ClientError("GOOGLE_AUTH_ERROR_CANNOT_VERIFY_ID_TOKEN");
   }
   const payload = ticket.getPayload();
   if (!payload) {
-    throw new ClientError("GOOGLE_AUHT_ERROR_CANNOT_GET_TOKEN_PAYLOAD");
+    throw new ClientError("GOOGLE_AUTH_ERROR_CANNOT_GET_TOKEN_PAYLOAD");
   }
   if (
     !payload.email ||

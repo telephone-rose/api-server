@@ -12,3 +12,4 @@ jwt-key
 /config/*
 !/config/*.json.tpl
 !/config/default.json
+.vscode

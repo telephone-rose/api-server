@@ -1,4 +1,4 @@
-{{ with secret "secret/api/production" }}
+{{ with secret "secret/api/staging" }}
 {
   "app": {
     "googleClientId": "{{ .Data.googleClientId }}",

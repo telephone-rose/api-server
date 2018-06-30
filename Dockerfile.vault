@@ -7,5 +7,3 @@ RUN curl -o vault.zip https://releases.hashicorp.com/vault/0.10.3/vault_0.10.3_l
 
 RUN curl -o consul-template.zip https://releases.hashicorp.com/consul-template/0.19.5/consul-template_0.19.5_linux_amd64.zip ; yes | unzip consul-template.zip \
   && mv ./consul-template /usr/bin
-
-ENV VAULT_ADDR=https://vault.telephone-ro.se
