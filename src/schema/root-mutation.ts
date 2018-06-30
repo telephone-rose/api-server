@@ -120,7 +120,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
       args: {
         devicePushToken: {
           description:
-            "Optionnaly, pass the device push token so it won't receive push anymore",
+            "Optionally, pass the device push token so it won't receive push anymore",
           type: GraphQLString,
         },
       },
@@ -158,7 +158,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
       args: {
         devicePushToken: {
           description:
-            "Optionnaly, pass the device push token so it won't receive push anymore",
+            "Optionally, pass the device push token so it won't receive push anymore",
           type: new GraphQLNonNull(GraphQLString),
         },
         deviceType: {
@@ -217,7 +217,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
       },
       type: new GraphQLNonNull(GraphQLBoolean),
     },
-    updageAnsweringMessage: {
+    updateAnsweringMessage: {
       args: {
         recordingFileId: {
           type: new GraphQLNonNull(GraphQLID),

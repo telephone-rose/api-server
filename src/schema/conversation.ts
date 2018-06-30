@@ -22,7 +22,7 @@ const config: GraphQLObjectTypeConfig<{}, {}> = {
       type: new GraphQLNonNull(GraphQLID),
     },
     latestActivityAt: {
-      description: "Usefull to sort conversations",
+      description: "Useful to sort conversations",
       type: new GraphQLNonNull(GraphQLDate),
     },
     members: {
