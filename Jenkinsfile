@@ -63,7 +63,7 @@ pipeline {
           docker.image("postgres").withRun("-e POSTGRES_PASSWORD=${env.DB_PASSWORD} -e POSTGRES_USER=${env.DB_USERNAME} -e POSTGRES_DB=${env.DB_NAME}") { pgContainer ->
             docker.image('postgres').inside("--link ${pgContainer.id}:pg") {
               /* Wait until mysql service is up */
-              sh "while ! psql -h pg -U ${env.DB_USERNAME} -d ${env.DB_USERNAME} -p ${env.DB_PASSWORD} -c \"select 1\"; do sleep 1; done"
+              sh "while ! psql postgres://${env.DB_USERNAME}:${env.DB_PASSWORD}@pg/${env.DB_NAME} -c \"select 1\"; do sleep 1; done"
             }
             docker.image("redis").withRun("") { redisContainer ->
               docker.build("telephone-rose-test:${env.BUILD_ID}", "-f Dockerfile.test ./").inside("--link ${pgContainer.id}:pg --link ${redisContainer.id}:redis") {
