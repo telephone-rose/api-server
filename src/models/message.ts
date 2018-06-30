@@ -4,7 +4,6 @@ interface IMessageAttributes {
   conversationId: string;
   recordingFileId: string;
   senderId: string;
-  recipientId: string;
   text?: string | null;
 }
 
@@ -22,10 +21,6 @@ export default (sequelize: Sequelize.Sequelize) =>
     "Message",
     {
       conversationId: {
-        allowNull: false,
-        type: Sequelize.UUID,
-      },
-      recipientId: {
         allowNull: false,
         type: Sequelize.UUID,
       },
