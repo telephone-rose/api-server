@@ -72,6 +72,15 @@ User.hasMany(Message, {
   sourceKey: "id",
 });
 
+Message.belongsTo(User, {
+  foreignKey: "recipientId",
+  targetKey: "id",
+});
+User.hasMany(Message, {
+  foreignKey: "recipientId",
+  sourceKey: "id",
+});
+
 Message.belongsTo(File, {
   foreignKey: "recordingFileId",
   targetKey: "id",

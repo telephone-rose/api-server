@@ -28,6 +28,9 @@ const config: GraphQLObjectTypeConfig<IMessageSource, IGraphQLContext> = {
     recipient: {
       type: new GraphQLNonNull(User),
     },
+    recipientId: {
+      type: new GraphQLNonNull(GraphQLString),
+    },
     recording: {
       type: new GraphQLNonNull(File),
     },
@@ -39,6 +42,10 @@ const config: GraphQLObjectTypeConfig<IMessageSource, IGraphQLContext> = {
     },
     sentAt: {
       type: new GraphQLNonNull(GraphQLString),
+    },
+    text: {
+      description: "Only for debugging purposes",
+      type: GraphQLString,
     },
   }),
   name: "Message",

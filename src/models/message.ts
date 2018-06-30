@@ -4,6 +4,8 @@ interface IMessageAttributes {
   conversationId: string;
   recordingFileId: string;
   senderId: string;
+  recipientId: string;
+  text?: string | null;
 }
 
 export interface IMessageInstance
@@ -12,6 +14,7 @@ export interface IMessageInstance
   readonly id: number;
   readonly createdAt: Date;
   readonly updatedAt: Date;
+  text: string | null;
 }
 
 export default (sequelize: Sequelize.Sequelize) =>
@@ -22,6 +25,10 @@ export default (sequelize: Sequelize.Sequelize) =>
         allowNull: false,
         type: Sequelize.UUID,
       },
+      recipientId: {
+        allowNull: false,
+        type: Sequelize.UUID,
+      },
       recordingFileId: {
         allowNull: false,
         type: Sequelize.UUID,
@@ -29,6 +36,11 @@ export default (sequelize: Sequelize.Sequelize) =>
       senderId: {
         allowNull: false,
         type: Sequelize.UUID,
+      },
+      text: {
+        allowNull: true,
+        comment: "Only for debugging purpose",
+        type: Sequelize.STRING,
       },
     },
     {
