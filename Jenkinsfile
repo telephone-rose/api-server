@@ -70,7 +70,7 @@ pipeline {
               sh "while ! psql postgres://${env.DB_USERNAME}:${env.DB_PASSWORD}@pg/${env.DB_NAME} -c \"select 1\"; do sleep 1; done"
             }
             docker.image("redis").withRun("") { redisContainer ->
-              docker.build("telephone-rose-test:${env.BUILD_ID}", "-f Dockerfile.test ./").inside("--link ${pgContainer.id}:pg --link ${redisContainer.id}:redis") {
+              docker.build("telephone-rose-test:${env.BUILD_ID}", "-f Dockerfile.test ./").inside("--link ${pgContainer.id}:postgres --link ${redisContainer.id}:redis") {
                 sh "npm ci"
                 sh "npm run lint"
                 sh "npm test"
