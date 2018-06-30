@@ -44,7 +44,6 @@ pipeline {
       steps {
         sh "npm ci"
         sh "npm run build"
-        sh "ls"
         sh "ls config"
       }
     }
@@ -61,13 +60,14 @@ pipeline {
       steps {
         script {
           docker.image("postgres").withRun("-e POSTGRES_PASSWORD=${env.DB_PASSWORD} -e POSTGRES_USER=${env.DB_USERNAME} -e POSTGRES_DB=${env.DB_NAME}") { pgContainer ->
+            sh "ls config"
             docker.image('postgres').inside("--link ${pgContainer.id}:pg") {
+              sh "ls config"
               /* Wait until mysql service is up */
               sh "while ! psql postgres://${env.DB_USERNAME}:${env.DB_PASSWORD}@pg/${env.DB_NAME} -c \"select 1\"; do sleep 1; done"
             }
             docker.image("redis").withRun("") { redisContainer ->
               docker.build("telephone-rose-test:${env.BUILD_ID}", "-f Dockerfile.test ./").inside("--link ${pgContainer.id}:pg --link ${redisContainer.id}:redis") {
-                sh "ls"
                 sh "ls config"
                 sh "npm ci"
                 sh "npm run lint"
