@@ -6,6 +6,11 @@ import {
   GraphQLNonNull,
 } from "graphql";
 
+export interface ICursorPaginationOutput {
+  beforeId?: string | null;
+  limit: number;
+}
+
 const config: GraphQLInputObjectTypeConfig = {
   fields: () => ({
     beforeId: {

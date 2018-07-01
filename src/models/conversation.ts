@@ -1,13 +1,14 @@
 import * as Sequelize from "sequelize";
 
 interface IConversationAttributes {
+  id?: string;
   latestActivityAt: Date;
 }
 
 export interface IConversationInstance
   extends Sequelize.Instance<IConversationAttributes>,
     IConversationAttributes {
-  readonly id: number;
+  readonly id: string;
   readonly createdAt: Date;
   readonly updatedAt: Date;
 }
@@ -28,6 +29,8 @@ export default (sequelize: Sequelize.Sequelize) =>
       },
     },
     {
-      indexes: [{ fields: ["latestActivityAt"] }],
+      indexes: [
+        { fields: [{ attribute: "latestActivityAt", order: "DESC" } as any] },
+      ],
     },
   );

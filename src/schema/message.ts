@@ -5,43 +5,53 @@ import {
   GraphQLObjectTypeConfig,
   GraphQLString,
 } from "graphql";
+import * as GraphQLDate from "graphql-date";
 
 import { IGraphQLContext } from "../context";
+import * as models from "../models";
 import { IMessageInstance } from "../models/message";
-import conversation from "./conversation";
-import File from "./file";
-import User from "./user";
+import conversation, { IConversationSource } from "./conversation";
+import File, { IFileSource } from "./file";
+import User, { IUserSource } from "./user";
 
 export interface IMessageSource extends IMessageInstance {}
 
 const config: GraphQLObjectTypeConfig<IMessageSource, IGraphQLContext> = {
   fields: () => ({
     conversation: {
+      resolve: async (message): Promise<IConversationSource> =>
+        (await models.Conversation.findById(message.conversationId))!,
       type: new GraphQLNonNull(conversation),
     },
     conversationId: {
+      resolve: (message): string => message.conversationId,
       type: new GraphQLNonNull(GraphQLString),
     },
     id: {
+      resolve: (message): string => message.id.toString(),
       type: new GraphQLNonNull(GraphQLID),
     },
-    recipient: {
-      type: new GraphQLNonNull(User),
-    },
     recording: {
+      resolve: async (message): Promise<IFileSource> =>
+        (await models.File.findById(message.recordingFileId))!,
       type: new GraphQLNonNull(File),
     },
     sender: {
+      resolve: async (message): Promise<IUserSource> =>
+        (await models.User.findById(message.senderId))!,
       type: new GraphQLNonNull(User),
     },
     senderId: {
+      resolve: (message): string => message.senderId,
       type: new GraphQLNonNull(GraphQLString),
     },
     sentAt: {
-      type: new GraphQLNonNull(GraphQLString),
+      resolve: (message): Date => message.createdAt,
+      type: new GraphQLNonNull(GraphQLDate),
     },
     text: {
       description: "Only for debugging purposes",
+      resolve: (message): string | null | undefined => message.text,
       type: GraphQLString,
     },
   }),

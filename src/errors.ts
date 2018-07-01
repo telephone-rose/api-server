@@ -25,7 +25,12 @@ type TClientErrorCode =
   | "INVALID_REFRESH_TOKEN"
   | "PERMISSION_DENIED"
   | "SESSION_REVOKED"
-  | "SESSION_NOT_FOUND";
+  | "SESSION_NOT_FOUND"
+  | "INVALID_DEVICE_TOKEN"
+  | "FILE_NOT_FOUND"
+  | "FILE_NOT_UPLOADED"
+  | "RECIPIENT_NOT_FOUND"
+  | "CANNOT_REQUEST_AN_UPLOAD_URL_FOR_AN_ALREADY_UPLOADED_FILE";
 
 export class ClientError extends Error {
   public name = "ClientError";

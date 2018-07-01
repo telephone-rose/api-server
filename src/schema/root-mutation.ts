@@ -1,5 +1,4 @@
 import {
-  GraphQLBoolean,
   GraphQLID,
   GraphQLInt,
   GraphQLNonNull,
@@ -11,14 +10,19 @@ import {
 import { IGraphQLContext } from "../context";
 import { ClientError, InternalServerError } from "../errors";
 import * as facebookAuth from "../facebook-auth";
+import * as fileManager from "../file-manager";
 import * as googleAuth from "../google-auth";
 import * as jwt from "../jwt";
 import * as models from "../models";
-import DeviceType from "./device-type";
+import Device, { IDeviceSource } from "./device";
+import DeviceType, { TDeviceTypeOutput } from "./device-type";
 import File from "./file";
-import GeometryPointInput from "./geometry-point-input";
-import Message from "./message";
+import GeometryPointInput, {
+  IGeometryPointOutput,
+} from "./geometry-point-input";
+import Message, { IMessageSource } from "./message";
 import Session, { ISessionSource } from "./session";
+import User, { IUserSource } from "./user";
 
 const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
   fields: () => ({
@@ -49,6 +53,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
 
           if (!user) {
             user = await models.User.create({
+              answeringMessageFileId: null,
               email: facebookCreds.email,
               facebookId: facebookCreds.id,
               firstName: facebookCreds.firstName,
@@ -96,6 +101,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
 
           if (!user) {
             user = await models.User.create({
+              answeringMessageFileId: null,
               email: googleCreds.email,
               facebookId: null,
               firstName: googleCreds.firstName,
@@ -124,7 +130,51 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
           type: GraphQLString,
         },
       },
-      type: new GraphQLNonNull(GraphQLBoolean),
+      resolve: async (
+        _,
+        { devicePushToken }: { devicePushToken: string },
+        context,
+      ) => {
+        const transaction = await models.sequelize.transaction();
+
+        try {
+          if (!context.accessTokenPayload || !context.user) {
+            throw new ClientError("PERMISSION_DENIED");
+          }
+          const session = await models.Session.findById(
+            context.accessTokenPayload!.session_id,
+            { transaction },
+          );
+          if (!session) {
+            throw new InternalServerError("Session not found", {
+              accessTokenPayload: context.accessTokenPayload,
+            });
+          }
+          session.revokedAt = new Date();
+          await session.save({ transaction });
+
+          if (devicePushToken) {
+            const device = await models.Device.find({
+              transaction,
+              where: { token: devicePushToken, userId: context.user.id },
+            });
+
+            if (!device) {
+              throw new ClientError("INVALID_DEVICE_TOKEN");
+            }
+
+            await device.destroy({ transaction });
+          }
+
+          await transaction.commit();
+
+          return session;
+        } catch (e) {
+          await transaction.rollback();
+          throw e;
+        }
+      },
+      type: new GraphQLNonNull(Session),
     },
     refreshAuthToken: {
       args: {
@@ -165,7 +215,50 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
           type: new GraphQLNonNull(DeviceType),
         },
       },
-      type: new GraphQLNonNull(GraphQLBoolean),
+      resolve: async (
+        _,
+        {
+          devicePushToken,
+          deviceType,
+        }: { devicePushToken: string; deviceType: TDeviceTypeOutput },
+        context,
+      ): Promise<IDeviceSource> => {
+        const transaction = await models.sequelize.transaction();
+
+        try {
+          if (!context.user) {
+            throw new ClientError("PERMISSION_DENIED");
+          }
+
+          let device = await models.Device.findOne({
+            transaction,
+            where: { token: devicePushToken },
+          });
+
+          if (device) {
+            device.userId = context.user.id;
+            device.type = deviceType;
+            await device.save({ transaction });
+          } else {
+            device = await models.Device.create(
+              {
+                token: devicePushToken,
+                type: deviceType,
+                userId: context.user.id,
+              },
+              { transaction },
+            );
+          }
+
+          await transaction.commit();
+
+          return device;
+        } catch (e) {
+          await transaction.rollback();
+          throw e;
+        }
+      },
+      type: new GraphQLNonNull(Device),
     },
     requestFileUpload: {
       args: {
@@ -175,6 +268,25 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
         contentType: {
           type: new GraphQLNonNull(GraphQLString),
         },
+      },
+      resolve: async (
+        _,
+        {
+          contentLength,
+          contentType,
+        }: { contentLength: number; contentType: string },
+        context,
+      ) => {
+        if (!context.user) {
+          throw new ClientError("PERMISSION_DENIED");
+        }
+        const file = await models.File.create({
+          contentLength,
+          contentType,
+          creatorId: context.user.id,
+        });
+
+        return file;
       },
       type: new GraphQLNonNull(File),
     },
@@ -206,16 +318,135 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
         recordingFileId: {
           type: new GraphQLNonNull(GraphQLID),
         },
+        text: {
+          type: GraphQLString,
+        },
+      },
+      resolve: async (
+        _,
+        {
+          recipientId,
+          recordingFileId,
+          text,
+        }: {
+          recipientId: string;
+          recordingFileId: string;
+          text?: string | null;
+        },
+        context,
+      ): Promise<IMessageSource> => {
+        if (!context.user) {
+          throw new ClientError("PERMISSION_DENIED");
+        }
+        const recordingFile = await models.File.findById(recordingFileId);
+        if (!recordingFile) {
+          throw new ClientError("FILE_NOT_FOUND");
+        }
+        if (recordingFile.creatorId !== context.user.id) {
+          throw new ClientError("PERMISSION_DENIED");
+        }
+        const fileHead = await fileManager
+          .headObject({ Key: recordingFile.id })
+          .catch(e => e);
+        if (fileHead instanceof Error) {
+          throw new ClientError("FILE_NOT_UPLOADED");
+        }
+
+        const recipient = await models.User.findById(recipientId);
+        if (!recipient) {
+          throw new ClientError("RECIPIENT_NOT_FOUND");
+        }
+
+        const transaction = await models.sequelize.transaction();
+        try {
+          const now = new Date();
+          let conversation = await models.Conversation.findOne({
+            include: [
+              {
+                model: models.ConversationUser,
+                where: { userId: context.user.id },
+              },
+              {
+                model: models.ConversationUser,
+                where: { userId: recipient.id },
+              },
+            ],
+            transaction,
+          });
+          if (!conversation) {
+            conversation = await models.Conversation.create(
+              {
+                latestActivityAt: now,
+              },
+              { transaction },
+            );
+            await models.ConversationUser.create(
+              {
+                conversationId: conversation.id,
+                userId: context.user.id,
+              },
+              { transaction },
+            );
+            await models.ConversationUser.create(
+              {
+                conversationId: conversation.id,
+                userId: recipient.id,
+              },
+              { transaction },
+            );
+          } else {
+            conversation.latestActivityAt = now;
+            await conversation.save({ transaction });
+          }
+
+          const message = await models.Message.create(
+            {
+              conversationId: conversation.id,
+              recordingFileId: recordingFile.id,
+              senderId: context.user.id,
+              text,
+            },
+            { transaction },
+          );
+
+          await transaction.commit();
+
+          return message;
+        } catch (e) {
+          await transaction.rollback();
+          throw e;
+        }
       },
       type: new GraphQLNonNull(Message),
     },
-    sendUserLocation: {
+    sendSelfLocation: {
       args: {
         location: {
           type: new GraphQLNonNull(GeometryPointInput),
         },
       },
-      type: new GraphQLNonNull(GraphQLBoolean),
+      resolve: async (
+        _,
+        {
+          location,
+        }: {
+          location: IGeometryPointOutput;
+        },
+        context,
+      ): Promise<IUserSource> => {
+        if (!context.user) {
+          throw new ClientError("PERMISSION_DENIED");
+        }
+        context.user.location = {
+          coordinates: [location.longitude, location.latitude],
+          type: "Point",
+        };
+
+        await context.user.save();
+
+        return context.user;
+      },
+      type: new GraphQLNonNull(User),
     },
     updateAnsweringMessage: {
       args: {
@@ -223,7 +454,33 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
           type: new GraphQLNonNull(GraphQLID),
         },
       },
-      type: new GraphQLNonNull(File),
+      resolve: async (
+        _,
+        {
+          recordingFileId,
+        }: {
+          recordingFileId: string;
+        },
+        context,
+      ): Promise<IUserSource> => {
+        if (!context.user) {
+          throw new ClientError("PERMISSION_DENIED");
+        }
+        const recordingFile = await models.File.findById(recordingFileId);
+        if (!recordingFile) {
+          throw new ClientError("FILE_NOT_FOUND");
+        }
+        if (recordingFile.creatorId !== context.user.id) {
+          throw new ClientError("PERMISSION_DENIED");
+        }
+
+        context.user.answeringMessageFileId = recordingFile.id;
+
+        await context.user.save();
+
+        return context.user;
+      },
+      type: new GraphQLNonNull(User),
     },
   }),
   name: "RootMutation",

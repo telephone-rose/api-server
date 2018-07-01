@@ -17,11 +17,13 @@ export default (sequelize: Sequelize.Sequelize) =>
         allowNull: false,
         primaryKey: true,
         type: Sequelize.UUID,
+        unique: "conversation_user",
       },
       userId: {
         allowNull: false,
         primaryKey: true,
         type: Sequelize.UUID,
+        unique: "conversation_user",
       },
     },
     {

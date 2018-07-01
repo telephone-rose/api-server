@@ -15,7 +15,7 @@ export interface ISource {
 const config: GraphQLObjectTypeConfig<ISource, IGraphQLContext> = {
   fields: () => ({
     latitude: {
-      resolve: (source): number => source.coordinates[0],
+      resolve: (source): number => source.coordinates[1],
       type: new GraphQLNonNull(GraphQLFloat),
     },
     longitude: {

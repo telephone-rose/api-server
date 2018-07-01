@@ -1,6 +1,10 @@
 {{ with secret "secret/api/staging" }}
 {
   "app": {
+    "awsS3AccessKeyId": "{{ .Data.awsS3AccessKeyId }}",
+    "awsS3SecretAccessKey": "{{ .Data.awsS3SecretAccessKey }}",
+    "awsS3Region": "{{ .Data.awsS3Region }}",
+    "awsS3UploadBucket": "{{ .Data.awsS3UploadBucket }}",
     "googleClientId": "{{ .Data.googleClientId }}",
     "googleClientSecret": "{{ .Data.googleClientSecret }}",
     "facebookAppId": "{{ .Data.facebookAppId }}",

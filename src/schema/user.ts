@@ -8,18 +8,20 @@ import {
   GraphQLObjectTypeConfig,
   GraphQLString,
 } from "graphql";
+import * as Sequelize from "sequelize";
 
 import { IGraphQLContext } from "../context";
 import * as models from "../models";
 import { IUserInstance } from "../models/user";
 import * as permissions from "../permissions";
-import Conversation from "./conversation";
-import CursorPaginationInput from "./cursor-pagination-input";
-import File from "./file";
+import Conversation, { IConversationSource } from "./conversation";
+import File, { IFileSource } from "./file";
 import GeometryPoint, {
   ISource as IGeometryPointSource,
 } from "./geometry-point";
-import GeometryPointInput from "./geometry-point-input";
+import GeometryPointInput, {
+  IGeometryPointOutput,
+} from "./geometry-point-input";
 import OffsetPaginationInput, {
   IOffsetPaginationOutput,
 } from "./offset-pagination-input";
@@ -29,21 +31,39 @@ export interface IUserSource extends IUserInstance {}
 
 const config: GraphQLObjectTypeConfig<IUserSource, IGraphQLContext> = {
   fields: () => ({
-    answeringMessage: {
-      resolve: () => null,
+    answeringMessageFile: {
+      resolve: async (user): Promise<IFileSource | null> => {
+        if (!user.answeringMessageFileId) {
+          return null;
+        }
+        return models.File.findById(user.answeringMessageFileId);
+      },
       type: File,
     },
     conversationCount: {
-      resolve: (): number => 0,
+      resolve: async (user): Promise<number> =>
+        await models.ConversationUser.count({ where: { userId: user.id } }),
       type: new GraphQLNonNull(GraphQLInt),
     },
     conversations: {
       args: {
         pagination: {
-          type: new GraphQLNonNull(CursorPaginationInput),
+          type: new GraphQLNonNull(OffsetPaginationInput),
         },
       },
-      resolve: () => [],
+      resolve: async (
+        user,
+        { pagination }: { pagination: IOffsetPaginationOutput },
+      ): Promise<IConversationSource[]> => {
+        return models.Conversation.findAll({
+          include: [
+            { model: models.ConversationUser, where: { userId: user.id } },
+          ],
+          limit: pagination.limit,
+          offset: pagination.offset,
+          order: [["latestActivityAt", "DESC"]],
+        });
+      },
       type: new GraphQLNonNull(
         new GraphQLList(new GraphQLNonNull(Conversation)),
       ),
@@ -87,13 +107,87 @@ const config: GraphQLObjectTypeConfig<IUserSource, IGraphQLContext> = {
     },
     randomUserFeed: {
       args: {
+        distance: {
+          description: "The distance to search within",
+          type: new GraphQLNonNull(GraphQLInt),
+        },
         location: {
-          defaultValue:
-            "Search for user near that location, if ommited will search neat the user location, and if nothing is set will search for random stuff",
-          type: GeometryPointInput,
+          description:
+            "Search for user near that location, if omitted will search near the user location, and if nothing is set will search for random stuff",
+          type: new GraphQLNonNull(GeometryPointInput),
+        },
+        pagination: {
+          type: new GraphQLNonNull(OffsetPaginationInput),
         },
       },
-      resolve: () => [],
+      resolve: async (
+        user,
+        {
+          distance,
+          location: _location,
+          pagination,
+        }: {
+          distance?: number | null;
+          location?: IGeometryPointOutput | null;
+          pagination: IOffsetPaginationOutput;
+        },
+      ) => {
+        const location = _location
+          ? models.sequelize.fn(
+              "ST_MakePoint",
+              _location.longitude,
+              _location.latitude,
+            )
+          : user.location
+            ? models.sequelize.fn(
+                "ST_MakePoint",
+                user.location.coordinates[0],
+                user.location.coordinates[1],
+              )
+            : null;
+        const orderFn = location
+          ? models.sequelize.fn(
+              "st_distance_sphere",
+              models.sequelize.col("location"),
+              location,
+            )
+          : models.sequelize.fn("random");
+
+        const where: Sequelize.WhereOptions<IUserInstance> = {
+          id: {
+            [models.sequelize.Op.notIn]: models.sequelize.literal(`
+              SELECT "Users".id FROM "Users"
+                LEFT JOIN "ConversationUsers" C2 on "Users".id = C2."userId"
+                LEFT JOIN "Conversations" C3 on C2."conversationId" = C3.id
+                LEFT JOIN "ConversationUsers" CU on C3.id = CU."conversationId"
+                WHERE "Users".id != ${models.sequelize.escape(user.id)}
+                AND C2."conversationId" IS NOT NULL AND CU."userId" = ${models.sequelize.escape(
+                  user.id,
+                )}
+            `),
+          },
+        };
+
+        if (location) {
+          (where as any)[models.sequelize.Op.or] = [
+            { location: { [models.sequelize.Op.is]: null } },
+            models.sequelize.fn(
+              "ST_DWithin",
+              models.sequelize.col("location"),
+              location,
+              distance,
+              true,
+            ),
+          ];
+        }
+
+        return models.User.findAll({
+          limit: pagination.limit,
+          offset: pagination.offset,
+          order: [orderFn as any],
+          where,
+        });
+      },
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(User))),
     },
     sessions: {

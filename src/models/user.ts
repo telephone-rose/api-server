@@ -1,6 +1,7 @@
 import * as Sequelize from "sequelize";
 
 interface IUserAttributes {
+  answeringMessageFileId: null | string;
   email: string;
   facebookId: string | null;
   googleId: string | null;
@@ -25,6 +26,10 @@ export default (sequelize: Sequelize.Sequelize) =>
   sequelize.define<IUserInstance, IUserAttributes>(
     "User",
     {
+      answeringMessageFileId: {
+        allowNull: true,
+        type: Sequelize.UUID,
+      },
       email: {
         allowNull: false,
         type: Sequelize.STRING,

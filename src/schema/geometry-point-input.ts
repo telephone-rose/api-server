@@ -5,6 +5,11 @@ import {
   GraphQLNonNull,
 } from "graphql";
 
+export interface IGeometryPointOutput {
+  latitude: number;
+  longitude: number;
+}
+
 const config: GraphQLInputObjectTypeConfig = {
   fields: () => ({
     latitude: {

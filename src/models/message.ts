@@ -1,6 +1,7 @@
 import * as Sequelize from "sequelize";
 
 interface IMessageAttributes {
+  id?: number;
   conversationId: string;
   recordingFileId: string;
   senderId: string;
@@ -10,7 +11,7 @@ interface IMessageAttributes {
 export interface IMessageInstance
   extends Sequelize.Instance<IMessageAttributes>,
     IMessageAttributes {
-  readonly id: number;
+  id: number;
   readonly createdAt: Date;
   readonly updatedAt: Date;
   text: string | null;
@@ -42,7 +43,7 @@ export default (sequelize: Sequelize.Sequelize) =>
       indexes: [
         { fields: ["senderId"] },
         { fields: ["conversationId"] },
-        { fields: ["createdAt"] },
+        { fields: [{ attribute: "createdAt", order: "DESC" } as any] },
       ],
     },
   );
