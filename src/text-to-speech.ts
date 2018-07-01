@@ -23,7 +23,7 @@ export const synthesize = async ({
   const result = await pollyClient
     .synthesizeSpeech({
       OutputFormat: "mp3",
-      SampleRate: "16000",
+      SampleRate: "22050",
       Text,
       VoiceId,
     })
