@@ -50,3 +50,15 @@ export const headObject = async ({
       return resolve(result);
     }),
   );
+
+export const putObject = async ({
+  Key,
+  Body,
+  ContentType,
+}: {
+  Key: string;
+  Body: Buffer;
+  ContentType: string;
+}) => {
+  await s3.putObject({ Key, Bucket, Body, ContentType }).promise();
+};

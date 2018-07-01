@@ -14,6 +14,7 @@ import { graphql } from "graphql";
 
 import { make as makeGraphQLContext } from "./context";
 import { formatGraphQLErrors, InternalServerError } from "./errors";
+import * as fixtures from "./fixtures";
 import * as jwt from "./jwt";
 import { sequelize } from "./models";
 import * as models from "./models";
@@ -173,5 +174,17 @@ export const syncHandler = async (
   } catch (error) {
     return callback(error);
   }
+  return callback();
+};
+
+export const fixtureHandler = async (
+  _: APIGatewayEvent,
+  context: Context,
+  callback: Callback,
+) => {
+  context.callbackWaitsForEmptyEventLoop = false;
+
+  await fixtures.generate(10);
+
   return callback();
 };

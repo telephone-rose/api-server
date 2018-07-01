@@ -138,3 +138,29 @@ Resources:
       Handler: index.syncHandler
       Description: 'An endpoint to trigger a db sync'
       Runtime: nodejs8.10
+  FixtureLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: './dist'
+      MemorySize: 512
+      Timeout: 20
+      Policies:
+        - AWSLambdaVPCAccessExecutionRole
+      VpcConfig:
+        SecurityGroupIds:
+         - !GetAtt LambdaSecurityGroup.GroupId
+        SubnetIds:
+        - subnet-09d4b83d43492a391
+        - subnet-0313a695f66eadadc
+        - subnet-047101e56a01d7602
+      Environment:
+        Variables:
+          NODE_ENV: production
+          DB_USERNAME: postgres
+          DB_PASSWORD: password
+          DB_NAME: postgres
+          DB_HOST: !GetAtt RDSPostgresInstance.Endpoint.Address
+          REDIS_HOST: !GetAtt RedisInstance.RedisEndpoint.Address
+      Handler: index.fixtureHandler
+      Description: 'An endpoint to create fixtures'
+      Runtime: nodejs8.10
