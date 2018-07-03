@@ -82,9 +82,5 @@ export const formatGraphQLErrors = (
       }
     }
 
-    raven.captureException(error, { extra: { id } });
-    return {
-      id,
-      message: "Internal Server Error",
-    };
+    return error;
   });
