@@ -14,7 +14,7 @@ describe("Text to speech", () => {
 
     const output = await textToSpeech.synthesize({
       Text: "Hello world",
-      VoiceId: voices[0],
+      VoiceId: voices[0].Id!,
     });
 
     assert(output instanceof Buffer);

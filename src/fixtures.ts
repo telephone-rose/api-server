@@ -26,7 +26,7 @@ export const generate = async (howMuch: number) => {
       const quote = await getRandomQuote();
       const fileBuffer = await textToSpeech.synthesize({
         Text: quote,
-        VoiceId: voices[lodash.random(voices.length - 1)],
+        VoiceId: voices[lodash.random(voices.length - 1)].Id!,
       });
       const flacFileBuffer = await audioConverter.run(fileBuffer, "flac");
       const compressedFileBuffer = await audioConverter.run(fileBuffer, "mp3");

@@ -7,10 +7,14 @@ const region = config.get<string>("app.awsS3Region");
 
 const pollyClient = new Polly({ accessKeyId, secretAccessKey, region });
 
-export const getVoices = async () => {
-  const voices = await pollyClient.describeVoices().promise();
+export const getVoices = async (LanguageCode: string = "en-US") => {
+  const voices = await pollyClient
+    .describeVoices({
+      LanguageCode,
+    })
+    .promise();
 
-  return voices.Voices!.map(voice => voice.Id!);
+  return voices.Voices!;
 };
 
 export const synthesize = async ({
