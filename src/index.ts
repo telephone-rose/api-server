@@ -184,7 +184,7 @@ export const fixtureHandler = async (
 ) => {
   context.callbackWaitsForEmptyEventLoop = false;
 
-  await fixtures.generate(10);
+  await fixtures.generate(1);
 
   return callback();
 };
