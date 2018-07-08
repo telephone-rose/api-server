@@ -12,7 +12,8 @@
     "jwtAccessTokenAlgorithm": "HS256",
     "jwtRefreshTokenAlgorithm": "HS256",
     "jwtAccessTokenKey": "access",
-    "jwtRefreshTokenKey": "refresh"
+    "jwtRefreshTokenKey": "refresh",
+    "googleCloudPlatformAPIKey": "{{ .Data.googleCloudPlatformAPIKey }}"
   }
 }
 {{ end }}

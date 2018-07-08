@@ -7,6 +7,7 @@ import {
   GraphQLString,
 } from "graphql";
 
+import * as audioConverter from "../audio-converter";
 import { IGraphQLContext } from "../context";
 import { ClientError, InternalServerError } from "../errors";
 import * as facebookAuth from "../facebook-auth";
@@ -14,6 +15,7 @@ import * as fileManager from "../file-manager";
 import * as googleAuth from "../google-auth";
 import * as jwt from "../jwt";
 import * as models from "../models";
+import * as speechToText from "../speech-to-text";
 import Device, { IDeviceSource } from "./device";
 import DeviceType, { TDeviceTypeOutput } from "./device-type";
 import File from "./file";
@@ -21,11 +23,90 @@ import GeometryPointInput, {
   IGeometryPointOutput,
 } from "./geometry-point-input";
 import Message, { IMessageSource } from "./message";
+import Recording, { IRecordingSource } from "./recording";
 import Session, { ISessionSource } from "./session";
 import User, { IUserSource } from "./user";
 
 const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
   fields: () => ({
+    createRecording: {
+      args: {
+        fileId: {
+          description: "A file ID which point to the recording",
+          type: new GraphQLNonNull(GraphQLID),
+        },
+        languageCode: {
+          defaultValue: "en-US",
+          description: "The user language code",
+          type: new GraphQLNonNull(GraphQLString),
+        },
+      },
+      description:
+        "Create a recording from a file, it may takes some time to proceed (~3s)",
+      resolve: async (
+        _,
+        { fileId, languageCode }: { fileId: string; languageCode: string },
+        context,
+      ): Promise<IRecordingSource> => {
+        if (!context.user) {
+          throw new ClientError("PERMISSION_DENIED");
+        }
+
+        const file = await models.File.findById(fileId);
+
+        if (!file) {
+          throw new ClientError("FILE_NOT_FOUND");
+        }
+
+        if (file.creatorId !== context.user.id) {
+          throw new ClientError("PERMISSION_DENIED");
+        }
+
+        const fileContent = await fileManager
+          .getObject({ Key: file.id })
+          .catch(e => e);
+        if (fileContent instanceof Error) {
+          throw new ClientError("FILE_NOT_UPLOADED");
+        }
+
+        const [compressedFile, transcript] = await Promise.all([
+          audioConverter
+            .run(fileContent.Body, "mp3")
+            .then(async compressedFileBuffer => {
+              const _compressedFile = await models.File.create({
+                contentLength: compressedFileBuffer.length,
+                contentType: "audio/mp3",
+                creatorId: file.id,
+              });
+
+              await fileManager.putObject({
+                Body: compressedFileBuffer,
+                ContentType: "audio/mp3",
+                Key: _compressedFile.id,
+              });
+
+              return _compressedFile;
+            }),
+          audioConverter
+            .run(fileContent.Body, "flac")
+            .then(async flacFileBuffer => {
+              return speechToText.recognize(flacFileBuffer, languageCode);
+            }),
+        ]);
+
+        const recording = await models.Recording.create({
+          compressedFileId: compressedFile.id,
+          creatorId: file.creatorId,
+          originalFileId: file.id,
+          transcript: transcript.transcript,
+          transcriptConfidence: transcript.confidence,
+          transcriptWords: transcript.words,
+        });
+
+        return recording;
+      },
+      type: new GraphQLNonNull(Recording),
+    },
     loginUsingFacebook: {
       args: {
         facebookToken: {
@@ -53,7 +134,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
 
           if (!user) {
             user = await models.User.create({
-              answeringMessageFileId: null,
+              answeringMessageRecordingId: null,
               email: facebookCreds.email,
               facebookId: facebookCreds.id,
               firstName: facebookCreds.firstName,
@@ -101,7 +182,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
 
           if (!user) {
             user = await models.User.create({
-              answeringMessageFileId: null,
+              answeringMessageRecordingId: null,
               email: googleCreds.email,
               facebookId: null,
               firstName: googleCreds.firstName,
@@ -315,10 +396,12 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
         recipientId: {
           type: new GraphQLNonNull(GraphQLID),
         },
-        recordingFileId: {
+        recordingId: {
+          description: "A file ID which point to the recording",
           type: new GraphQLNonNull(GraphQLID),
         },
         text: {
+          description: "Only usefull for debuging purposes",
           type: GraphQLString,
         },
       },
@@ -326,11 +409,11 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
         _,
         {
           recipientId,
-          recordingFileId,
+          recordingId,
           text,
         }: {
           recipientId: string;
-          recordingFileId: string;
+          recordingId: string;
           text?: string | null;
         },
         context,
@@ -338,18 +421,12 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
         if (!context.user) {
           throw new ClientError("PERMISSION_DENIED");
         }
-        const recordingFile = await models.File.findById(recordingFileId);
-        if (!recordingFile) {
-          throw new ClientError("FILE_NOT_FOUND");
+        const recording = await models.Recording.findById(recordingId);
+        if (!recording) {
+          throw new ClientError("RECORDING_NOT_FOUND");
         }
-        if (recordingFile.creatorId !== context.user.id) {
+        if (recording.creatorId !== context.user.id) {
           throw new ClientError("PERMISSION_DENIED");
-        }
-        const fileHead = await fileManager
-          .headObject({ Key: recordingFile.id })
-          .catch(e => e);
-        if (fileHead instanceof Error) {
-          throw new ClientError("FILE_NOT_UPLOADED");
         }
 
         const recipient = await models.User.findById(recipientId);
@@ -402,7 +479,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
           const message = await models.Message.create(
             {
               conversationId: conversation.id,
-              recordingFileId: recordingFile.id,
+              recordingId: recording.id,
               senderId: context.user.id,
               text,
             },
@@ -450,31 +527,31 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
     },
     updateAnsweringMessage: {
       args: {
-        recordingFileId: {
+        recordingId: {
           type: new GraphQLNonNull(GraphQLID),
         },
       },
       resolve: async (
         _,
         {
-          recordingFileId,
+          recordingId,
         }: {
-          recordingFileId: string;
+          recordingId: string;
         },
         context,
       ): Promise<IUserSource> => {
         if (!context.user) {
           throw new ClientError("PERMISSION_DENIED");
         }
-        const recordingFile = await models.File.findById(recordingFileId);
-        if (!recordingFile) {
-          throw new ClientError("FILE_NOT_FOUND");
+        const recording = await models.Recording.findById(recordingId);
+        if (!recording) {
+          throw new ClientError("RECORDING_NOT_FOUND");
         }
-        if (recordingFile.creatorId !== context.user.id) {
+        if (recording.creatorId !== context.user.id) {
           throw new ClientError("PERMISSION_DENIED");
         }
 
-        context.user.answeringMessageFileId = recordingFile.id;
+        context.user.answeringMessageRecordingId = recording.id;
 
         await context.user.save();
 

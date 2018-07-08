@@ -13,3 +13,4 @@ jwt-key
 !/config/*.json.tpl
 !/config/default.json
 .vscode
+.DS_Store

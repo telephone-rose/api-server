@@ -1,7 +1,7 @@
 import * as Sequelize from "sequelize";
 
 interface IUserAttributes {
-  answeringMessageFileId: null | string;
+  answeringMessageRecordingId: null | string;
   email: string;
   facebookId: string | null;
   googleId: string | null;
@@ -26,7 +26,7 @@ export default (sequelize: Sequelize.Sequelize) =>
   sequelize.define<IUserInstance, IUserAttributes>(
     "User",
     {
-      answeringMessageFileId: {
+      answeringMessageRecordingId: {
         allowNull: true,
         type: Sequelize.UUID,
       },

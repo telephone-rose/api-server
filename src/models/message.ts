@@ -3,7 +3,7 @@ import * as Sequelize from "sequelize";
 interface IMessageAttributes {
   id?: number;
   conversationId: string;
-  recordingFileId: string;
+  recordingId: string;
   senderId: string;
   text?: string | null;
 }
@@ -25,7 +25,7 @@ export default (sequelize: Sequelize.Sequelize) =>
         allowNull: false,
         type: Sequelize.UUID,
       },
-      recordingFileId: {
+      recordingId: {
         allowNull: false,
         type: Sequelize.UUID,
       },

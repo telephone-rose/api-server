@@ -11,7 +11,7 @@ import { IGraphQLContext } from "../context";
 import * as models from "../models";
 import { IMessageInstance } from "../models/message";
 import conversation, { IConversationSource } from "./conversation";
-import File, { IFileSource } from "./file";
+import Recording, { IRecordingSource } from "./recording";
 import User, { IUserSource } from "./user";
 
 export interface IMessageSource extends IMessageInstance {}
@@ -32,9 +32,9 @@ const config: GraphQLObjectTypeConfig<IMessageSource, IGraphQLContext> = {
       type: new GraphQLNonNull(GraphQLID),
     },
     recording: {
-      resolve: async (message): Promise<IFileSource> =>
-        (await models.File.findById(message.recordingFileId))!,
-      type: new GraphQLNonNull(File),
+      resolve: async (message): Promise<IRecordingSource> =>
+        (await models.Recording.findById(message.recordingId))!,
+      type: new GraphQLNonNull(Recording),
     },
     sender: {
       resolve: async (message): Promise<IUserSource> =>

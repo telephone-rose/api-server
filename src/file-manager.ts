@@ -62,3 +62,11 @@ export const putObject = async ({
 }) => {
   await s3.putObject({ Key, Bucket, Body, ContentType }).promise();
 };
+
+export const getObject = async ({ Key }: { Key: string }) => {
+  return s3.getObject({ Key, Bucket }).promise();
+};
+
+export const deleteObject = async ({ Key }: { Key: string }) => {
+  return s3.deleteObject({ Key, Bucket }).promise();
+};

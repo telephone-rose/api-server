@@ -6,6 +6,7 @@ import conversationUserDefinition from "./conversation-user";
 import deviceDefinition from "./device";
 import fileDefinition from "./file";
 import messageDefinition from "./message";
+import recordingDefinition from "./recording";
 import sessionDefinition from "./session";
 import userDefinition from "./user";
 
@@ -24,8 +25,9 @@ export const ConversationUser = conversationUserDefinition(sequelize);
 export const Device = deviceDefinition(sequelize);
 export const File = fileDefinition(sequelize);
 export const Message = messageDefinition(sequelize);
-export const User = userDefinition(sequelize);
+export const Recording = recordingDefinition(sequelize);
 export const Session = sessionDefinition(sequelize);
+export const User = userDefinition(sequelize);
 
 ConversationUser.belongsTo(Conversation, {
   foreignKey: "conversationId",
@@ -69,13 +71,19 @@ User.hasMany(Message, {
   sourceKey: "id",
 });
 
-Message.belongsTo(File, {
-  foreignKey: "recordingFileId",
+Message.belongsTo(Recording, {
+  foreignKey: "recordingId",
   targetKey: "id",
 });
-File.hasMany(Message, {
-  foreignKey: "recordingFileId",
-  sourceKey: "id",
+
+Recording.belongsTo(File, {
+  foreignKey: "originalFileId",
+  targetKey: "id",
+});
+
+Recording.belongsTo(File, {
+  foreignKey: "compressedFileId",
+  targetKey: "id",
 });
 
 Device.belongsTo(User, { foreignKey: "userId", targetKey: "id" });
@@ -83,3 +91,9 @@ User.hasMany(Device, { foreignKey: "userId", sourceKey: "id" });
 
 Session.belongsTo(User, { foreignKey: "userId", targetKey: "id" });
 User.hasMany(Session, { foreignKey: "userId", sourceKey: "id" });
+
+User.belongsTo(Recording, {
+  constraints: false,
+  foreignKey: "answeringMessageRecordingId",
+  targetKey: "id",
+});

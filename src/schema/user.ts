@@ -15,7 +15,6 @@ import * as models from "../models";
 import { IUserInstance } from "../models/user";
 import * as permissions from "../permissions";
 import Conversation, { IConversationSource } from "./conversation";
-import File, { IFileSource } from "./file";
 import GeometryPoint, {
   ISource as IGeometryPointSource,
 } from "./geometry-point";
@@ -25,6 +24,7 @@ import GeometryPointInput, {
 import OffsetPaginationInput, {
   IOffsetPaginationOutput,
 } from "./offset-pagination-input";
+import Recording, { IRecordingSource } from "./recording";
 import Session, { ISessionSource } from "./session";
 
 export interface IUserSource extends IUserInstance {}
@@ -32,13 +32,13 @@ export interface IUserSource extends IUserInstance {}
 const config: GraphQLObjectTypeConfig<IUserSource, IGraphQLContext> = {
   fields: () => ({
     answeringMessageFile: {
-      resolve: async (user): Promise<IFileSource | null> => {
-        if (!user.answeringMessageFileId) {
+      resolve: async (user): Promise<IRecordingSource | null> => {
+        if (!user.answeringMessageRecordingId) {
           return null;
         }
-        return models.File.findById(user.answeringMessageFileId);
+        return models.Recording.findById(user.answeringMessageRecordingId);
       },
-      type: File,
+      type: Recording,
     },
     conversationCount: {
       resolve: async (user): Promise<number> =>
