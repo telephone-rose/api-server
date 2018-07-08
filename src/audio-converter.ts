@@ -1,8 +1,9 @@
 import * as childProcess from "child_process";
-import * as ffmpegStatic from "ffmpeg-static";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
+
+const ffmpegPath = path.join(__dirname, "..", `ffmpeg.${os.platform()}`);
 
 import logger from "./logger";
 
@@ -25,7 +26,7 @@ export const run = (
         if (writeInputErr) {
           return reject(writeInputErr);
         }
-        const process = childProcess.spawn(ffmpegStatic.path, [
+        const process = childProcess.spawn(ffmpegPath, [
           "-i",
           inputFilePath,
           outputFilePath,
