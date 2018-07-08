@@ -29,7 +29,7 @@ export const recognize = async (content: Buffer, languageCode = "en-US") => {
     },
   );
 
-  logger.info("Speech to text result", result);
+  logger.info("Speech to text result", result.data);
 
   return result.data.results[0].alternatives[0];
 };
