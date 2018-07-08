@@ -8,7 +8,7 @@
     "googleClientId": "{{ .Data.googleClientId }}",
     "googleClientSecret": "{{ .Data.googleClientSecret }}",
     "facebookAppId": "{{ .Data.facebookAppId }}",
-    "facebookAppSecret": "{{ .Data.facebookAppSecret }}".
+    "facebookAppSecret": "{{ .Data.facebookAppSecret }}",
     "googleCloudPlatformAPIKey": "{{ .Data.googleCloudPlatformAPIKey }}"
   }
 }
