@@ -16,5 +16,5 @@ describe("Audio converter", () => {
     const mp3 = await audioConverter.run(opus, "mp3");
 
     assert(Buffer.isBuffer(mp3));
-  }).timeout(4000);
+  }).timeout(10000);
 });

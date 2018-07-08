@@ -84,8 +84,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: './dist'
-      MemorySize: 512
-      Timeout: 3
+      MemorySize: 1024
+      Timeout: 10
       Policies:
         - AWSLambdaVPCAccessExecutionRole
       VpcConfig:
