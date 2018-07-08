@@ -1,6 +1,8 @@
 import axios from "axios";
 import * as config from "config";
 
+import logger from "./logger";
+
 const googleCloudPlatformAPIKey = config.get("app.googleCloudPlatformAPIKey");
 
 export const recognize = async (content: Buffer, languageCode = "en-US") => {
@@ -26,6 +28,8 @@ export const recognize = async (content: Buffer, languageCode = "en-US") => {
       },
     },
   );
+
+  logger.info("Speech to text result", result);
 
   return result.data.results[0].alternatives[0];
 };
