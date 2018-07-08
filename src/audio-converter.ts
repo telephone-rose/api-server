@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 
-const ffmpegPath = path.join(__dirname, "..", `ffmpeg.${os.platform()}`);
+const ffmpegPath = path.join(__dirname, `ffmpeg.${os.platform()}`);
 
 import logger from "./logger";
 

@@ -15,7 +15,7 @@
     "package":
       "aws cloudformation package --template-file template.yaml --output-template-file serverless-output.yaml --s3-bucket graphql-api-server-lambda-function",
     "copy":
-      "mkdir dist && cp -rf lib/* package*.json jwt-access-token-key jwt-access-token-key.pub jwt-refresh-token-key jwt-refresh-token-key.pub ffmpeg.linux config dist && cd dist && npm ci --production && cd -",
+      "mkdir dist && cp -rf lib/* package*.json jwt-access-token-key jwt-access-token-key.pub jwt-refresh-token-key jwt-refresh-token-key.pub src/ffmpeg.linux config dist && cd dist && npm ci --production && cd -",
     "deploy":
       "npm run clean && npm run build && npm run copy && npm run package && aws cloudformation deploy --template-file serverless-output.yaml --stack-name graphql-api --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset"
   },
