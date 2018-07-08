@@ -3,6 +3,7 @@ import * as Chance from "chance";
 import * as lodash from "lodash";
 
 import * as audioConverter from "./audio-converter";
+import { ClientError } from "./errors";
 import * as fileManager from "./file-manager";
 import * as models from "./models";
 import * as speechToText from "./speech-to-text";
@@ -33,6 +34,11 @@ export const generate = async (howMuch: number) => {
         flacFileBuffer,
         "en-US",
       );
+
+      if (!transcription) {
+        throw new ClientError("CANNOT_TRANSCRIPT_TEXT");
+      }
+
       const transaction = await models.sequelize.transaction();
       try {
         const user = await models.User.create(

@@ -31,6 +31,7 @@ type TClientErrorCode =
   | "RECORDING_NOT_FOUND"
   | "FILE_NOT_UPLOADED"
   | "RECIPIENT_NOT_FOUND"
+  | "CANNOT_TRANSCRIPT_TEXT"
   | "CANNOT_REQUEST_AN_UPLOAD_URL_FOR_AN_ALREADY_UPLOADED_FILE";
 
 export class ClientError extends Error {

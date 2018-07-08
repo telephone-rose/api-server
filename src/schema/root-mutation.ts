@@ -94,6 +94,10 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
             }),
         ]);
 
+        if (!transcript) {
+          throw new ClientError("CANNOT_TRANSCRIPT_TEXT");
+        }
+
         const recording = await models.Recording.create({
           compressedFileId: compressedFile.id,
           creatorId: file.creatorId,
