@@ -76,7 +76,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
               const _compressedFile = await models.File.create({
                 contentLength: compressedFileBuffer.length,
                 contentType: "audio/mp3",
-                creatorId: file.id,
+                creatorId: file.creatorId,
               });
 
               await fileManager.putObject({
