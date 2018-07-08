@@ -69,45 +69,59 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
           throw new ClientError("FILE_NOT_UPLOADED");
         }
 
-        const [compressedFile, transcript] = await Promise.all([
-          audioConverter
-            .run(fileContent.Body, "mp3")
-            .then(async compressedFileBuffer => {
-              const _compressedFile = await models.File.create({
-                contentLength: compressedFileBuffer.length,
-                contentType: "audio/mp3",
-                creatorId: file.creatorId,
-              });
+        const transaction = await models.sequelize.transaction();
 
-              await fileManager.putObject({
-                Body: compressedFileBuffer,
-                ContentType: "audio/mp3",
-                Key: _compressedFile.id,
-              });
+        try {
+          const [compressedFile, transcript] = await Promise.all([
+            audioConverter
+              .run(fileContent.Body, "mp3")
+              .then(async compressedFileBuffer => {
+                const _compressedFile = await models.File.create(
+                  {
+                    contentLength: compressedFileBuffer.length,
+                    contentType: "audio/mp3",
+                    creatorId: file.creatorId,
+                  },
+                  { transaction },
+                );
 
-              return _compressedFile;
-            }),
-          audioConverter
-            .run(fileContent.Body, "flac")
-            .then(async flacFileBuffer => {
-              return speechToText.recognize(flacFileBuffer, languageCode);
-            }),
-        ]);
+                await fileManager.putObject({
+                  Body: compressedFileBuffer,
+                  ContentType: "audio/mp3",
+                  Key: _compressedFile.id,
+                });
 
-        if (!transcript) {
-          throw new ClientError("CANNOT_TRANSCRIPT_TEXT");
+                return _compressedFile;
+              }),
+            audioConverter
+              .run(fileContent.Body, "flac")
+              .then(async flacFileBuffer => {
+                return speechToText.recognize(flacFileBuffer, languageCode);
+              }),
+          ]);
+
+          if (!transcript) {
+            throw new ClientError("CANNOT_TRANSCRIPT_TEXT");
+          }
+
+          const recording = await models.Recording.create(
+            {
+              compressedFileId: compressedFile.id,
+              creatorId: file.creatorId,
+              originalFileId: file.id,
+              transcript: transcript.transcript,
+              transcriptConfidence: transcript.confidence,
+              transcriptWords: transcript.words,
+            },
+            { transaction },
+          );
+
+          await transaction.commit();
+          return recording;
+        } catch (e) {
+          await transaction.rollback();
+          throw e;
         }
-
-        const recording = await models.Recording.create({
-          compressedFileId: compressedFile.id,
-          creatorId: file.creatorId,
-          originalFileId: file.id,
-          transcript: transcript.transcript,
-          transcriptConfidence: transcript.confidence,
-          transcriptWords: transcript.words,
-        });
-
-        return recording;
       },
       type: new GraphQLNonNull(Recording),
     },
