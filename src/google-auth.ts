@@ -3,6 +3,7 @@ import { OAuth2Client } from "google-auth-library";
 import { ClientError } from "./errors";
 
 const googleClientId = config.get<string>("app.googleClientId");
+const googleClientAudiences = config.get<string>("app.googleClientAudiences");
 const googleClientSecret = config.get<string>("app.googleClientSecret");
 const client = new OAuth2Client({
   clientId: googleClientId,
@@ -11,7 +12,7 @@ const client = new OAuth2Client({
 
 export const verify = async (token: string) => {
   const ticket = await client.verifyIdToken({
-    audience: googleClientId,
+    audience: googleClientAudiences.split(","),
     idToken: token,
   });
   if (!ticket) {

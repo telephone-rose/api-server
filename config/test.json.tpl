@@ -7,6 +7,7 @@
     "awsS3UploadBucket": "{{ .Data.awsS3UploadBucket }}",
     "googleClientId": "{{ .Data.googleClientId }}",
     "googleClientSecret": "{{ .Data.googleClientSecret }}",
+    "googleClientAudiences": "{{ .Data.googleClientAudiences }}",
     "facebookAppId": "{{ .Data.facebookAppId }}",
     "facebookAppSecret": "{{ .Data.facebookAppSecret }}",
     "jwtAccessTokenAlgorithm": "HS256",
