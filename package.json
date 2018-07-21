@@ -55,20 +55,19 @@
     "branches": 80
   },
   "dependencies": {
-    "@types/aws-lambda": "^8.10.7",
+    "@types/aws-lambda": "^8.10.8",
     "@types/aws-sdk": "^2.7.0",
     "@types/config": "0.0.34",
     "@types/graphql": "^0.13.3",
     "@types/graphql-date": "^1.0.2",
-    "@types/ioredis": "^3.2.11",
+    "@types/ioredis": "^3.2.13",
     "@types/jsonwebtoken": "^7.2.8",
     "@types/node": "^10.5.2",
     "@types/raven": "^2.5.1",
-    "@types/sequelize": "^4.27.23",
+    "@types/sequelize": "^4.27.24",
     "@types/uuid": "^3.4.3",
     "@types/winston": "^2.3.9",
-    "apollo-server-lambda": "^1.3.6",
-    "aws-sdk": "^2.270.1",
+    "aws-sdk": "^2.279.1",
     "axios": "^0.18.0",
     "chance": "^1.0.16",
     "config": "^1.30.0",
@@ -87,8 +86,8 @@
   },
   "devDependencies": {
     "@types/chance": "^1.0.1",
-    "@types/lodash": "^4.14.110",
-    "@types/mocha": "^5.2.4",
+    "@types/lodash": "^4.14.112",
+    "@types/mocha": "^5.2.5",
     "cross-env": "^5.2.0",
     "husky": "^0.14.3",
     "lint-staged": "^7.2.0",
@@ -97,8 +96,8 @@
     "prettier": "^1.13.7",
     "rimraf": "^2.6.2",
     "ts-node": "^6.2.0",
-    "tslint": "^5.10.0",
-    "tslint-config-prettier": "^1.13.0",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.14.0",
     "typescript": "^2.9.2"
   }
 }
