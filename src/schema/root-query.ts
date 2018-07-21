@@ -98,7 +98,6 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
 
         return models.User.findAll({
           limit: pagination.limit,
-          offset: pagination.offset,
           order: [orderFn as any],
           where,
         });
