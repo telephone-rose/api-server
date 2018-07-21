@@ -67,6 +67,7 @@ export const graphqlHandler = async (
     } catch (e) {
       return callback(null, {
         body: JSON.stringify({
+          detail: e.message,
           error: "Unable to parse query",
           got: stringQuery,
         }),

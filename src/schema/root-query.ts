@@ -84,7 +84,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
         const where: Sequelize.WhereOptions<IUserInstance> = {
           id: {
             [models.sequelize.Op.notIn]: models.sequelize.literal(`
-              SELECT "Users".id FROM "Users"
+              ( SELECT "Users".id FROM "Users" )
             `),
           },
         };
