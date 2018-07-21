@@ -114,7 +114,7 @@ const config: GraphQLObjectTypeConfig<IUserSource, IGraphQLContext> = {
         location: {
           description:
             "Search for user near that location, if omitted will search near the user location, and if nothing is set will search for random stuff",
-          type: new GraphQLNonNull(GeometryPointInput),
+          type: GeometryPointInput,
         },
         pagination: {
           type: new GraphQLNonNull(OffsetPaginationInput),
