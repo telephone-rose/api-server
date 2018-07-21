@@ -20,6 +20,10 @@ const _translate = async ({
   source: string;
   text: string;
 }) => {
+  if (source === target) {
+    return text;
+  }
+
   const result = await axios.post<
     | {
         data?: {
@@ -60,7 +64,7 @@ export const toEmoji = async ({
   word: string;
   source: string;
 }) => {
-  const englishWord = await _translate({ target: "en", source, text: word });
+  const englishWord = await translate({ target: "en", source, text: word });
   if (!englishWord) {
     return null;
   }
