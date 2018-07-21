@@ -76,6 +76,7 @@ export const generate = async (howMuch: number) => {
           {
             compressedFileId: compressedFile.id,
             creatorId: user.id,
+            languageCode: "en-US",
             originalFileId: file.id,
             transcript: transcription.transcript,
             transcriptConfidence: transcription.confidence,

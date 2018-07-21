@@ -22,6 +22,7 @@ import File from "./file";
 import GeometryPointInput, {
   IGeometryPointOutput,
 } from "./geometry-point-input";
+import languageCode, { TLanguageCode } from "./language-code";
 import Message, { IMessageSource } from "./message";
 import Recording, { IRecordingSource } from "./recording";
 import Session, { ISessionSource } from "./session";
@@ -38,14 +39,17 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
         languageCode: {
           defaultValue: "en-US",
           description: "The user language code",
-          type: new GraphQLNonNull(GraphQLString),
+          type: new GraphQLNonNull(languageCode),
         },
       },
       description:
         "Create a recording from a file, it may takes some time to proceed (~3s)",
       resolve: async (
         _,
-        { fileId, languageCode }: { fileId: string; languageCode: string },
+        {
+          fileId,
+          languageCode: _languageCode,
+        }: { fileId: string; languageCode: TLanguageCode },
         context,
       ): Promise<IRecordingSource> => {
         if (!context.user) {
@@ -96,7 +100,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
             audioConverter
               .run(fileContent.Body, "flac")
               .then(async flacFileBuffer => {
-                return speechToText.recognize(flacFileBuffer, languageCode);
+                return speechToText.recognize(flacFileBuffer, _languageCode);
               }),
           ]);
 
@@ -108,6 +112,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
             {
               compressedFileId: compressedFile.id,
               creatorId: file.creatorId,
+              languageCode: _languageCode,
               originalFileId: file.id,
               transcript: transcript.transcript,
               transcriptConfidence: transcript.confidence,

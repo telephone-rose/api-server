@@ -4,6 +4,7 @@ interface IRecordingAttributes {
   id?: string;
   creatorId: string;
   compressedFileId: string;
+  languageCode: string;
   originalFileId: string;
   transcript: string;
   transcriptConfidence: number;
@@ -39,6 +40,10 @@ export default (sequelize: Sequelize.Sequelize) =>
         defaultValue: Sequelize.UUIDV4,
         primaryKey: true,
         type: Sequelize.UUID,
+      },
+      languageCode: {
+        allowNull: false,
+        type: Sequelize.STRING,
       },
       originalFileId: {
         allowNull: false,
