@@ -8,6 +8,7 @@ import * as fileManager from "./file-manager";
 import * as models from "./models";
 import * as speechToText from "./speech-to-text";
 import * as textToSpeech from "./text-to-speech";
+import translate from "./translate";
 
 const chance = new Chance();
 
@@ -19,21 +20,32 @@ export const getRandomQuote = async () => {
   return response.data.message;
 };
 
+const langs = ["fr-FR", "en-US", "es-ES"];
+
 export const generate = async (howMuch: number) => {
-  const voices = await textToSpeech.getVoices();
   /* const users = */ await Promise.all(
     lodash.range(howMuch).map(async () => {
-      const quote = await getRandomQuote();
+      const _quote = await getRandomQuote();
+      const lang = langs[lodash.random(0, langs.length - 1)];
+      const quote = await translate({
+        source: "en",
+        target: lang,
+        text: _quote,
+      });
+
+      if (!quote) {
+        throw new Error(`Unable to translate quote: ${_quote}, to ${lang}`);
+      }
+
+      const [voice] = await textToSpeech.getVoices(lang);
+
       const fileBuffer = await textToSpeech.synthesize({
         Text: quote,
-        VoiceId: voices[lodash.random(voices.length - 1)].Id!,
+        VoiceId: voice.Id!,
       });
       const flacFileBuffer = await audioConverter.run(fileBuffer, "flac");
       const compressedFileBuffer = await audioConverter.run(fileBuffer, "mp3");
-      const transcription = await speechToText.recognize(
-        flacFileBuffer,
-        "en-US",
-      );
+      const transcription = await speechToText.recognize(flacFileBuffer, lang);
 
       if (!transcription) {
         throw new ClientError("CANNOT_TRANSCRIPT_TEXT");
@@ -76,7 +88,7 @@ export const generate = async (howMuch: number) => {
           {
             compressedFileId: compressedFile.id,
             creatorId: user.id,
-            languageCode: "en-US",
+            languageCode: lang,
             originalFileId: file.id,
             transcript: transcription.transcript,
             transcriptConfidence: transcription.confidence,
