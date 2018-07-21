@@ -1,4 +1,4 @@
-import { GraphQLEnumType } from "../../node_modules/@types/graphql";
+import { GraphQLEnumType } from "graphql";
 
 export type TLanguageCode = "en-US" | "es-ES" | "fr-FR";
 
@@ -9,7 +9,7 @@ export default new GraphQLEnumType({
   values: languages.reduce(
     (acc: { [key: string]: { value: TLanguageCode } }, language) => ({
       ...acc,
-      [language]: { value: language },
+      [language.replace(/-/, "")]: { value: language },
     }),
     {},
   ),

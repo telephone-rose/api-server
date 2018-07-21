@@ -47,7 +47,11 @@ export const graphqlHandler = async (
     };
 
     const stringQuery =
-      event.httpMethod === "POST" ? event.body : event.queryStringParameters;
+      event.httpMethod === "POST"
+        ? event.body
+        : event.queryStringParameters
+          ? event.queryStringParameters.query
+          : null;
 
     if (typeof stringQuery !== "string") {
       return callback(null, {
@@ -62,7 +66,10 @@ export const graphqlHandler = async (
       query = JSON.parse(stringQuery);
     } catch (e) {
       return callback(null, {
-        body: JSON.stringify({ error: "Unable to parse query", got: query }),
+        body: JSON.stringify({
+          error: "Unable to parse query",
+          got: stringQuery,
+        }),
         headers: responseHeaders,
         statusCode: 400,
       });

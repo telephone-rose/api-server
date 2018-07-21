@@ -109,7 +109,7 @@ const config: GraphQLObjectTypeConfig<IUserSource, IGraphQLContext> = {
       args: {
         distance: {
           description: "The distance to search within",
-          type: new GraphQLNonNull(GraphQLInt),
+          type: GraphQLInt,
         },
         location: {
           description:
