@@ -20,7 +20,7 @@ const config: GraphQLObjectTypeConfig<
 > = {
   fields: () => ({
     emoji: {
-      resolve: (tw): string | null => tw.word,
+      resolve: (tw): string | null => tw.emoji,
       type: GraphQLString,
     },
     endTime: {
