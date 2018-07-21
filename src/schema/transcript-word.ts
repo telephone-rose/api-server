@@ -11,6 +11,7 @@ export interface ITranscriptWordSource {
   startTime: string;
   endTime: string;
   word: string;
+  emoji: string | null;
 }
 
 const config: GraphQLObjectTypeConfig<
@@ -18,6 +19,10 @@ const config: GraphQLObjectTypeConfig<
   IGraphQLContext
 > = {
   fields: () => ({
+    emoji: {
+      resolve: (tw): string | null => tw.word,
+      type: GraphQLString,
+    },
     endTime: {
       resolve: (tw): string => tw.endTime,
       type: new GraphQLNonNull(GraphQLString),

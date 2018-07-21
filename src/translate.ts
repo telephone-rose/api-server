@@ -1,13 +1,17 @@
 import axios from "axios";
+import * as Bluebird from "bluebird";
 import * as config from "config";
-import * as redis from "./redis";
+import * as emojilib from "emojilib";
+import * as lodash from "lodash";
 
 import logger from "./logger";
+import * as redis from "./redis";
 
 const googleCloudPlatformAPIKey = config.get("app.googleCloudPlatformAPIKey");
 const redisClient = redis.createClient({ keyPrefix: "translate" });
+const emojiArray = Object.values(emojilib.lib);
 
-const translate = async ({
+const _translate = async ({
   target,
   source,
   text,
@@ -49,21 +53,88 @@ const translate = async ({
   return result.data.data.translations[0].translatedText;
 };
 
-export default async ({
-  target,
+export const toEmoji = async ({
+  word,
   source,
+}: {
+  word: string;
+  source: string;
+}) => {
+  const englishWord = await _translate({ target: "en", source, text: word });
+  if (!englishWord) {
+    return null;
+  }
+  const emojiFound = emojiArray.filter(emoji =>
+    emoji.keywords.includes(englishWord.toLowerCase()),
+  );
+  if (emojiFound.length === 0) {
+    return null;
+  }
+  const randomIndex = lodash.random(0, emojiFound.length - 1);
+  const randomEmoji = emojiFound[randomIndex];
+  return randomEmoji.char;
+};
+
+export const emojiResume = async ({
+  source,
+  text,
+  length,
+}: {
+  source: string;
+  text: string;
+  length: number;
+}) => {
+  const translation = await translate({ target: "en", source, text });
+
+  if (!translation) {
+    return translation;
+  }
+
+  const words = translation.split(" ").map(word => word.toLowerCase());
+  const fullResume = await Bluebird.reduce(
+    Object.entries(lodash.countBy(words)),
+    async (
+      acc: Array<[string, number]>,
+      [word, count],
+    ): Promise<Array<[string, number]>> => {
+      const emoji = await toEmoji({ source: "en", word });
+      if (!emoji) {
+        return acc;
+      }
+      return [...acc, [emoji, count]];
+    },
+    [],
+  );
+
+  return fullResume
+    .sort(([, aCount], [, bCount]) => aCount - bCount)
+    .slice(0, length)
+    .map(([word]) => word)
+    .join(" ");
+};
+
+const translate = async ({
+  target: _target,
+  source: _source,
   text,
 }: {
   target: string;
   source: string;
   text: string;
 }) => {
+  const target = _target.substring(0, 2);
+  const source = _source.substring(0, 2);
+  if (source === target) {
+    return text;
+  }
   const key = `${target}:${source}:${text}`;
   const cachedResult = await redisClient.get(key);
   if (cachedResult) {
     return cachedResult;
   }
-  const result = await translate({ target, source, text });
+  const result = await _translate({ target, source, text });
   await redisClient.set(key, result);
   return result;
 };
+
+export default translate;

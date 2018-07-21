@@ -69,8 +69,10 @@
     "@types/winston": "^2.3.9",
     "aws-sdk": "^2.279.1",
     "axios": "^0.18.0",
+    "bluebird": "^3.5.1",
     "chance": "^1.0.16",
     "config": "^1.30.0",
+    "emojilib": "^2.3.0",
     "google-auth-library": "^1.6.1",
     "graphql": "^0.13.2",
     "graphql-date": "^1.0.3",
@@ -85,6 +87,7 @@
     "winston": "^3.0.0"
   },
   "devDependencies": {
+    "@types/bluebird": "^3.5.22",
     "@types/chance": "^1.0.1",
     "@types/lodash": "^4.14.112",
     "@types/mocha": "^5.2.5",
