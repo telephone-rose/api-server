@@ -81,13 +81,7 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
             )
           : models.sequelize.fn("random");
 
-        const where: Sequelize.WhereOptions<IUserInstance> = {
-          id: {
-            [models.sequelize.Op.notIn]: models.sequelize.literal(`
-              ( SELECT "Users".id FROM "Users" )
-            `),
-          },
-        };
+        const where: Sequelize.WhereOptions<IUserInstance> = {};
 
         if (location) {
           (where as any)[models.sequelize.Op.or] = [
