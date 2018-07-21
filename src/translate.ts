@@ -9,10 +9,13 @@ import * as redis from "./redis";
 
 const googleCloudPlatformAPIKey = config.get("app.googleCloudPlatformAPIKey");
 const redisClient = redis.createClient({ keyPrefix: "translate" });
-const emojiArray = Object.entries(emojilib.lib).map(([name, emoji]) => ({
-  ...emoji,
-  name,
-}));
+const emojiArray = Object.entries(emojilib.lib).map(([name, emoji]) => {
+  return {
+    ...emoji,
+    keywords: emoji.keywords.filter(keyword => keyword.length > 2),
+    name,
+  };
+});
 
 const _translate = async ({
   target,
