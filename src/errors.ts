@@ -73,14 +73,20 @@ export const formatGraphQLErrors = (
           id,
           message: "Internal Server Error",
         };
-      }
-      if (error.originalError instanceof ClientError) {
+      } else if (error.originalError instanceof ClientError) {
         return {
           code: error.originalError.code,
           locations: error.locations,
           message: "Client Error",
           path: error.path,
         };
+      } else {
+        raven.captureException(error, {
+          extra: {
+            ...error.originalError,
+            id,
+          },
+        });
       }
     }
 
