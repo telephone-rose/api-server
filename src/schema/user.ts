@@ -156,7 +156,8 @@ const config: GraphQLObjectTypeConfig<IUserSource, IGraphQLContext> = {
         const where: Sequelize.WhereOptions<IUserInstance> = {
           id: {
             [models.sequelize.Op.and]: [
-              { [models.sequelize.Op.notIn]: user.id },
+              // TODO: Add tests
+              { [models.sequelize.Op.not]: user.id },
               {
                 [models.sequelize.Op.notIn]: models.sequelize.literal(`
                 ( SELECT "Users".id FROM "Users"
