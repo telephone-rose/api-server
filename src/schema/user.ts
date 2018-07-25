@@ -155,17 +155,22 @@ const config: GraphQLObjectTypeConfig<IUserSource, IGraphQLContext> = {
 
         const where: Sequelize.WhereOptions<IUserInstance> = {
           id: {
-            [models.sequelize.Op.notIn]: models.sequelize.literal(`
-              ( SELECT "Users".id FROM "Users"
-                LEFT JOIN "ConversationUsers" C2 on "Users".id = C2."userId"
-                LEFT JOIN "Conversations" C3 on C2."conversationId" = C3.id
-                LEFT JOIN "ConversationUsers" CU on C3.id = CU."conversationId"
-                WHERE "Users".id != ${models.sequelize.escape(user.id)}
-                AND C2."conversationId" IS NOT NULL AND CU."userId" = ${models.sequelize.escape(
-                  user.id,
-                )}
-              )
+            [models.sequelize.Op.and]: [
+              { [models.sequelize.Op.notIn]: user.id },
+              {
+                [models.sequelize.Op.notIn]: models.sequelize.literal(`
+                ( SELECT "Users".id FROM "Users"
+                  LEFT JOIN "ConversationUsers" C2 on "Users".id = C2."userId"
+                  LEFT JOIN "Conversations" C3 on C2."conversationId" = C3.id
+                  LEFT JOIN "ConversationUsers" CU on C3.id = CU."conversationId"
+                  WHERE "Users".id != ${models.sequelize.escape(user.id)}
+                  AND C2."conversationId" IS NOT NULL AND CU."userId" = ${models.sequelize.escape(
+                    user.id,
+                  )}
+                )
             `),
+              },
+            ],
           },
         };
 
