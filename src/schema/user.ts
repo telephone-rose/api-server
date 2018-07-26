@@ -11,6 +11,8 @@ import {
 import * as Sequelize from "sequelize";
 
 import { IGraphQLContext } from "../context";
+import { ClientError } from "../errors";
+import * as geocoding from "../geocoding";
 import * as models from "../models";
 import { IUserInstance } from "../models/user";
 import * as permissions from "../permissions";
@@ -21,6 +23,7 @@ import GeometryPoint, {
 import GeometryPointInput, {
   IGeometryPointOutput,
 } from "./geometry-point-input";
+import languageCode, { TLanguageCode } from "./language-code";
 import OffsetPaginationInput, {
   IOffsetPaginationOutput,
 } from "./offset-pagination-input";
@@ -39,6 +42,41 @@ const config: GraphQLObjectTypeConfig<IUserSource, IGraphQLContext> = {
         return models.Recording.findById(user.answeringMessageRecordingId);
       },
       type: Recording,
+    },
+    city: {
+      args: {
+        language: {
+          type: languageCode,
+        },
+      },
+      resolve: async (
+        user,
+        { language }: { language: TLanguageCode },
+      ): Promise<string | null> => {
+        if (!user.location) {
+          return null;
+        }
+        const reverseResult = await geocoding.reverse({
+          language,
+          latitude: user.location.coordinates[1],
+          longitude: user.location.coordinates[0],
+        });
+
+        if (!reverseResult) {
+          return null;
+        }
+
+        const addressComponent = reverseResult.address_components.find(
+          component => component.types.includes("administrative_area_level_1"),
+        );
+
+        if (!addressComponent) {
+          return null;
+        }
+
+        return addressComponent.long_name;
+      },
+      type: GraphQLString,
     },
     conversationCount: {
       resolve: async (user): Promise<number> =>
@@ -67,6 +105,87 @@ const config: GraphQLObjectTypeConfig<IUserSource, IGraphQLContext> = {
       type: new GraphQLNonNull(
         new GraphQLList(new GraphQLNonNull(Conversation)),
       ),
+    },
+    country: {
+      args: {
+        language: {
+          type: languageCode,
+        },
+      },
+      resolve: async (
+        user,
+        { language }: { language: TLanguageCode },
+      ): Promise<string | null> => {
+        if (!user.location) {
+          return null;
+        }
+        const reverseResult = await geocoding.reverse({
+          language,
+          latitude: user.location.coordinates[1],
+          longitude: user.location.coordinates[0],
+        });
+
+        if (!reverseResult) {
+          return null;
+        }
+
+        const addressComponent = reverseResult.address_components.find(
+          component => component.types.includes("country"),
+        );
+
+        if (!addressComponent) {
+          return null;
+        }
+
+        return addressComponent.long_name;
+      },
+      type: GraphQLString,
+    },
+    distance: {
+      args: {
+        from: {
+          type: GeometryPointInput,
+        },
+      },
+      resolve: async (
+        user,
+        { from }: { from?: IGeometryPointOutput | null },
+        context,
+      ): Promise<number | null> => {
+        if (
+          !user.location ||
+          (!from && (!context.user || !context.user.location))
+        ) {
+          return null;
+        }
+
+        const [{ distance }]: [
+          { distance: number }
+        ] = await models.sequelize.query(
+          `
+          SELECT 
+            st_distance_sphere(
+              ST_MakePoint(:source_longitude, :source_latitude), 
+              ST_MakePoint(:target_longitude, :target_latitude)
+            ) distance
+        `,
+          {
+            replacements: {
+              source_latitude: user.location.coordinates[0],
+              source_longitude: user.location.coordinates[1],
+              target_latitude: from
+                ? from.latitude
+                : context.user!.location!.coordinates[0],
+              target_longitude: from
+                ? from.latitude
+                : context.user!.location!.coordinates[1],
+            },
+          },
+        );
+
+        return distance;
+      },
+      type: GraphQLInt,
     },
     email: {
       resolve: (user, _, context): string => {
@@ -102,7 +221,14 @@ const config: GraphQLObjectTypeConfig<IUserSource, IGraphQLContext> = {
       type: new GraphQLNonNull(GraphQLString),
     },
     location: {
-      resolve: (user): IGeometryPointSource | null => user.location,
+      description:
+        "The user exact location, can only be accessed by the user himself",
+      resolve: (user, _, context): IGeometryPointSource | null => {
+        if (!context.user || context.user.id !== user.id) {
+          throw new ClientError("PERMISSION_DENIED");
+        }
+        return user.location;
+      },
       type: GeometryPoint,
     },
     randomUserFeed: {
