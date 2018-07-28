@@ -13,6 +13,7 @@ import * as Sequelize from "sequelize";
 import { IGraphQLContext } from "../context";
 import { ClientError } from "../errors";
 import * as geocoding from "../geocoding";
+import haversine from "../haversine";
 import * as models from "../models";
 import { IUserInstance } from "../models/user";
 import * as permissions from "../permissions";
@@ -147,43 +148,32 @@ const config: GraphQLObjectTypeConfig<IUserSource, IGraphQLContext> = {
           type: GeometryPointInput,
         },
       },
-      resolve: async (
+      resolve: (
         user,
         { from }: { from?: IGeometryPointOutput | null },
         context,
-      ): Promise<number | null> => {
-        if (
-          !user.location ||
-          (!from && (!context.user || !context.user.location))
-        ) {
+      ): number | null => {
+        const start = from
+          ? from
+          : context.user && context.user.location
+            ? {
+                latitude: context.user.location.coordinates[1],
+                longitude: context.user.location.coordinates[0],
+              }
+            : null;
+        const end =
+          user && user.location
+            ? {
+                latitude: user.location.coordinates[1],
+                longitude: user.location.coordinates[0],
+              }
+            : null;
+
+        if (!start || !end) {
           return null;
         }
 
-        const [{ distance }]: [
-          { distance: number }
-        ] = await models.sequelize.query(
-          `
-          SELECT 
-            st_distance_sphere(
-              ST_MakePoint(:source_longitude, :source_latitude), 
-              ST_MakePoint(:target_longitude, :target_latitude)
-            ) distance
-        `,
-          {
-            replacements: {
-              source_latitude: user.location.coordinates[0],
-              source_longitude: user.location.coordinates[1],
-              target_latitude: from
-                ? from.latitude
-                : context.user!.location!.coordinates[0],
-              target_longitude: from
-                ? from.latitude
-                : context.user!.location!.coordinates[1],
-            },
-          },
-        );
-
-        return distance;
+        return Math.round(haversine(start, end));
       },
       type: GraphQLInt,
     },
