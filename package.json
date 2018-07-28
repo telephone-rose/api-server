@@ -6,6 +6,8 @@
   "scripts": {
     "build": "tsc -p .",
     "lint": "tslint -p .",
+    "create-vault-token":
+      "vault token create -address https://vault.telephone-ro.se -policy=jenkins-token-generator -ttl=768h",
     "clean": "rimraf lib dist serverless-output.yaml",
     "precommit": "npm run build && lint-staged && npm test",
     "test":

@@ -1,5 +1,6 @@
 import axios from "axios";
 import {
+  GraphQLBoolean,
   GraphQLInt,
   GraphQLList,
   GraphQLNonNull,
@@ -9,6 +10,7 @@ import {
 } from "graphql";
 import * as Sequelize from "sequelize";
 
+import * as availability from "../availability";
 import { IGraphQLContext } from "../context";
 import * as models from "../models";
 import { IUserInstance } from "../models/user";
@@ -23,14 +25,18 @@ import User, { IUserSource } from "./user";
 
 const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
   fields: () => ({
-    ip: {
-      description: "Only useful for debugging purpose",
-      resolve: async () => {
-        const result = await axios.get("https://api.ipify.org?format=json");
-
-        return result.data.ip;
+    generalAvailability: {
+      resolve: async (): Promise<boolean> => {
+        try {
+          await availability.redis();
+          await availability.postgres();
+          await axios.get("https://api.ipify.org?format=json");
+          return true;
+        } catch {
+          return false;
+        }
       },
-      type: new GraphQLNonNull(GraphQLString),
+      type: new GraphQLNonNull(GraphQLBoolean),
     },
     me: {
       resolve: (_, __, context): IUserSource => {
@@ -39,6 +45,17 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
         return context.user!;
       },
       type: new GraphQLNonNull(User),
+    },
+    postgresAvailability: {
+      resolve: async (): Promise<boolean> => {
+        try {
+          await availability.postgres();
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      type: new GraphQLNonNull(GraphQLBoolean),
     },
     randomUserFeed: {
       args: {
@@ -103,6 +120,26 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
         });
       },
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(User))),
+    },
+    redisAvailability: {
+      resolve: async (): Promise<boolean> => {
+        try {
+          await availability.redis();
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      type: new GraphQLNonNull(GraphQLBoolean),
+    },
+    serverOutboundIp: {
+      description: "Only useful for debugging purpose",
+      resolve: async () => {
+        const result = await axios.get("https://api.ipify.org?format=json");
+
+        return result.data.ip;
+      },
+      type: new GraphQLNonNull(GraphQLString),
     },
   }),
   name: "RootQuery",

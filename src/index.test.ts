@@ -6,7 +6,7 @@ describe("Test the main endpoint", () => {
   it("Should work", done => {
     index.graphqlHandler(
       {
-        body: `{ "query": "{ ip }" }`,
+        body: `{ "query": "{ generalAvailability }" }`,
         headers: {},
         httpMethod: "POST",
         isBase64Encoded: false,
@@ -59,7 +59,10 @@ describe("Test the main endpoint", () => {
       (status, result) => {
         assert(result.body);
         const jsonResult = JSON.parse(result.body);
-        assert.strictEqual(typeof jsonResult.data.ip, "string");
+        assert.strictEqual(
+          typeof jsonResult.data.generalAvailability,
+          "boolean",
+        );
         return done(status);
       },
     );
