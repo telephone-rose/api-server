@@ -68,7 +68,7 @@ const config: GraphQLObjectTypeConfig<IUserSource, IGraphQLContext> = {
         }
 
         const addressComponent = reverseResult.address_components.find(
-          component => component.types.includes("administrative_area_level_1"),
+          component => component.types.includes("locality"),
         );
 
         if (!addressComponent) {
