@@ -1,10 +1,12 @@
 import * as config from "config";
 import * as Sequelize from "sequelize";
 
+import blockedUserDefinition from "./blocked-user";
 import conversationDefinition from "./conversation";
 import conversationUserDefinition from "./conversation-user";
 import deviceDefinition from "./device";
 import fileDefinition from "./file";
+import hiddenUserDefinition from "./hidden-user";
 import messageDefinition from "./message";
 import recordingDefinition from "./recording";
 import sessionDefinition from "./session";
@@ -28,6 +30,8 @@ export const Message = messageDefinition(sequelize);
 export const Recording = recordingDefinition(sequelize);
 export const Session = sessionDefinition(sequelize);
 export const User = userDefinition(sequelize);
+export const BlockedUser = blockedUserDefinition(sequelize);
+export const HiddenUser = hiddenUserDefinition(sequelize);
 
 ConversationUser.belongsTo(Conversation, {
   foreignKey: "conversationId",
@@ -95,5 +99,25 @@ User.hasMany(Session, { foreignKey: "userId", sourceKey: "id" });
 User.belongsTo(Recording, {
   constraints: false,
   foreignKey: "answeringMessageRecordingId",
+  targetKey: "id",
+});
+
+BlockedUser.belongsTo(User, {
+  foreignKey: "userId",
+  targetKey: "id",
+});
+
+BlockedUser.belongsTo(User, {
+  foreignKey: "byUserId",
+  targetKey: "id",
+});
+
+HiddenUser.belongsTo(User, {
+  foreignKey: "userId",
+  targetKey: "id",
+});
+
+HiddenUser.belongsTo(User, {
+  foreignKey: "byUserId",
   targetKey: "id",
 });

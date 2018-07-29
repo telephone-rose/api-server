@@ -30,6 +30,63 @@ import User, { IUserSource } from "./user";
 
 const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
   fields: () => ({
+    blockUser: {
+      args: {
+        userId: {
+          description: "The id of the user to block",
+          type: new GraphQLNonNull(GraphQLString),
+        },
+      },
+      description: "Block a user so it won't be able to post something to you",
+      resolve: async (
+        _,
+        args: { userId: string },
+        context,
+      ): Promise<IUserSource> => {
+        if (!context.user) {
+          throw new ClientError("PERMISSION_DENIED");
+        }
+        const transaction = await models.sequelize.transaction();
+        try {
+          const userToBlock = await models.User.findById(args.userId, {
+            lock: transaction.LOCK.UPDATE,
+            transaction,
+          });
+
+          if (!userToBlock) {
+            throw new ClientError("USER_NOT_FOUND");
+          }
+
+          const maybeAlreadyBlocked = await models.BlockedUser.findOne({
+            transaction,
+            where: {
+              byUserId: context.user.id,
+              userId: userToBlock.id,
+            },
+          });
+
+          if (maybeAlreadyBlocked) {
+            throw new ClientError("USER_ALREADY_BLOCKED");
+          }
+
+          await models.BlockedUser.create(
+            {
+              byUserId: context.user.id,
+              userId: userToBlock.id,
+            },
+            { transaction },
+          );
+
+          await transaction.commit();
+
+          return userToBlock;
+        } catch (e) {
+          await transaction.rollback();
+          throw e;
+        }
+      },
+      type: new GraphQLNonNull(User),
+    },
     createRecording: {
       args: {
         fileId: {
@@ -129,6 +186,63 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
         }
       },
       type: new GraphQLNonNull(Recording),
+    },
+    hideUser: {
+      args: {
+        userId: {
+          description: "The id of the user to hide",
+          type: new GraphQLNonNull(GraphQLString),
+        },
+      },
+      description: "Hide a user so it won't appear in your discover feed",
+      resolve: async (
+        _,
+        args: { userId: string },
+        context,
+      ): Promise<IUserSource> => {
+        if (!context.user) {
+          throw new ClientError("PERMISSION_DENIED");
+        }
+        const transaction = await models.sequelize.transaction();
+        try {
+          const userToHide = await models.User.findById(args.userId, {
+            lock: transaction.LOCK.UPDATE,
+            transaction,
+          });
+
+          if (!userToHide) {
+            throw new ClientError("USER_NOT_FOUND");
+          }
+
+          const maybeAlreadyHidden = await models.HiddenUser.findOne({
+            transaction,
+            where: {
+              byUserId: context.user.id,
+              userId: userToHide.id,
+            },
+          });
+
+          if (maybeAlreadyHidden) {
+            throw new ClientError("USER_ALREADY_HIDDEN");
+          }
+
+          await models.HiddenUser.create(
+            {
+              byUserId: context.user.id,
+              userId: userToHide.id,
+            },
+            { transaction },
+          );
+
+          await transaction.commit();
+
+          return userToHide;
+        } catch (e) {
+          await transaction.rollback();
+          throw e;
+        }
+      },
+      type: new GraphQLNonNull(User),
     },
     loginUsingFacebook: {
       args: {
@@ -455,6 +569,13 @@ const config: GraphQLObjectTypeConfig<{}, IGraphQLContext> = {
         const recipient = await models.User.findById(recipientId);
         if (!recipient) {
           throw new ClientError("RECIPIENT_NOT_FOUND");
+        }
+
+        const maybeBlockedUser = await models.BlockedUser.findOne({
+          where: { byUserId: recipient.id, userId: context.user.id },
+        });
+        if (maybeBlockedUser) {
+          throw new ClientError("USER_BLOCKED");
         }
 
         const transaction = await models.sequelize.transaction();

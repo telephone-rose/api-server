@@ -6,20 +6,14 @@
   "scripts": {
     "build": "tsc -p .",
     "lint": "tslint -p .",
-    "create-vault-token":
-      "vault token create -address https://vault.telephone-ro.se -policy=jenkins-token-generator -ttl=768h",
+    "create-vault-token": "vault token create -address https://vault.telephone-ro.se -policy=jenkins-token-generator -ttl=768h",
     "clean": "rimraf lib dist serverless-output.yaml",
     "precommit": "npm run build && lint-staged && npm test",
-    "test":
-      "cross-env NODE_ENV=test nyc mocha --exit --require source-map-support/register --require ts-node/register --full-trace --trace-warnings --bail 'src/**/*.test.ts' -g LOCAL -i",
-    "test-only":
-      "cross-env NODE_ENV=test nyc mocha --exit --require source-map-support/register --require ts-node/register --full-trace --trace-warnings --bail 'src/**/*.test.ts'",
-    "package":
-      "aws cloudformation package --template-file template.yaml --output-template-file serverless-output.yaml --s3-bucket graphql-api-server-lambda-function",
-    "copy":
-      "mkdir dist && cp -rf lib/* package*.json jwt-access-token-key jwt-access-token-key.pub jwt-refresh-token-key jwt-refresh-token-key.pub src/ffmpeg.linux config dist && cd dist && npm ci --production && cd -",
-    "deploy":
-      "npm run clean && npm run build && npm run copy && npm run package && aws cloudformation deploy --template-file serverless-output.yaml --stack-name graphql-api --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset"
+    "test": "cross-env NODE_ENV=test nyc mocha --exit --require source-map-support/register --require ts-node/register --full-trace --trace-warnings --bail 'src/**/*.test.ts' -g LOCAL -i",
+    "test-only": "cross-env NODE_ENV=test nyc mocha --exit --require source-map-support/register --require ts-node/register --full-trace --trace-warnings --bail 'src/**/*.test.ts'",
+    "package": "aws cloudformation package --template-file template.yaml --output-template-file serverless-output.yaml --s3-bucket graphql-api-server-lambda-function",
+    "copy": "mkdir dist && cp -rf lib/* package*.json jwt-access-token-key jwt-access-token-key.pub jwt-refresh-token-key jwt-refresh-token-key.pub src/ffmpeg.linux config dist && cd dist && npm ci --production && cd -",
+    "deploy": "npm run clean && npm run build && npm run copy && npm run package && aws cloudformation deploy --template-file serverless-output.yaml --stack-name graphql-api --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset"
   },
   "repository": {
     "type": "git",
@@ -73,7 +67,7 @@
     "axios": "^0.18.0",
     "bluebird": "^3.5.1",
     "chance": "^1.0.16",
-    "config": "^1.31.0",
+    "config": "^2.0.0",
     "emojilib": "^2.3.0",
     "google-auth-library": "^1.6.1",
     "graphql": "^0.13.2",
@@ -98,7 +92,7 @@
     "lint-staged": "^7.2.0",
     "mocha": "^5.2.0",
     "nyc": "^12.0.2",
-    "prettier": "^1.13.7",
+    "prettier": "^1.14.0",
     "rimraf": "^2.6.2",
     "ts-node": "^6.2.0",
     "tslint": "^5.11.0",
